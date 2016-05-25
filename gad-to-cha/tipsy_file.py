@@ -2,6 +2,51 @@ import numpy as np
 import numpy.ctypeslib as npct
 import ctypes
 
+class tipsy_header(ctypes.Structure):
+    _fields_= [
+        ('time', ctypes.c_double),
+        ('nbodies', ctypes.c_int),
+        ('ndim', ctypes.c_int),
+        ('ngas', ctypes.c_int),
+        ('ndark', ctypes.c_int),
+        ('nstar', ctypes.c_int)
+    ]
+
+class streaming_reader():
+    """Read a tipsy file and output to multiple streams of data.
+       This is essentially a conversion from AoS to SoA.
+    """
+    def __init__(self, filename):
+        self.lib = load_tipsy()
+        self.lib.tipsy_open_file(ctypes.c_char_p(bytes(filename, 'utf-8')),
+                                 ctypes.c_char_p(bytes('rb', 'utf-8')))
+
+    def close(self):
+        self.lib.tipsy_close_file()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self):
+        self.close()
+
+    def read_all(self):
+        pass
+    
+    def read_header(self):
+        h = tipsy_header()
+        self.lib.tipsy_read_header(ctypes.byref(h))
+        print(h.time, h.nbodies, h.ngas, h.ndark, h.nstar)
+    
+    def read_dark(self):
+        pass
+    
+    def read_stars(self):
+        pass
+    
+    def read_gas(self):
+        pass
+        
 class streaming_writer():
     """Write a tipsy file from multiple streams of data.
        This is essentially a conversion from SoA to AoS.
