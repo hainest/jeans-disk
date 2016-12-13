@@ -45,5 +45,8 @@ if ($changa) {
 	
 	execute("cd src/changa; ./configure; make depends; make -j$njobs");
 	copy('src/changa/ChaNGa', 'nogas/') or die;
+	copy('src/changa/charmrun', 'nogas/') or die;
+	
 	copy('src/changa/ChaNGa', 'gas/') or die;
+	copy('src/changa/charmrun', 'gas/') or die;
 }
