@@ -13,8 +13,12 @@ typedef enum {
 	TIPSY_WRITE_UNOPENED = -2, /* Write to unopened file */
 } tipsy_error_t;
 
-int	 tipsy_open_file(const char *, const char *);
-void	tipsy_close_file();
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
+int	 		tipsy_open_file(const char *, const char *);
+void		tipsy_close_file();
 FILE *      tipsy_get_fd();
 const char *tipsy_get_last_system_error();
 const char *tipsy_strerror(tipsy_error_t);
@@ -24,7 +28,7 @@ int tipsy_read_star_particles(tipsy_star_data *);
 int tipsy_read_dark_particles(tipsy_dark_data *);
 int tipsy_read_gas_particles(tipsy_gas_data *);
 
-int tipsy_write_header(double time, int ngas, int ndark, int nstar);
+int tipsy_write_header(double time, unsigned ngas, unsigned ndark, unsigned nstar);
 
 int tipsy_write_gas_particles(const float *mass,
 			      const float (*pos)[3],
@@ -52,3 +56,7 @@ int tipsy_write_star_particles(const float *mass,
 			       const float  softening,
 			       const size_t size,
 			       const int    is_blackhole);
+
+#ifdef __cplusplus
+	}
+#endif

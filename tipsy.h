@@ -4,11 +4,11 @@
 
 typedef struct {
 	double time;
-	int nbodies;
+	unsigned int nbodies;
 	int ndim;
-	int ngas;
-	int ndark;
-	int nstar;
+	unsigned int ngas;
+	unsigned int ndark;
+	unsigned int nstar;
 } tipsy_header;
 
 typedef struct {

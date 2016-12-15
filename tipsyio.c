@@ -157,7 +157,7 @@ int tipsy_read_gas_particles(tipsy_gas_data *d) {
 
 /*************************************************************************************************************/
 
-int tipsy_write_header(double time, int ngas, int ndark, int nstar) {
+int tipsy_write_header(double time, unsigned ngas, unsigned ndark, unsigned nstar) {
 	if (!tipsy_fd) { return TIPSY_WRITE_UNOPENED; }
 
 	tipsy_header h = {time, ngas + ndark + nstar, 3, ngas, ndark, nstar};
