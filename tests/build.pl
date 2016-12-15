@@ -1,13 +1,7 @@
 use strict;
 use warnings;
+use Utilities qw(execute);
 use File::Copy qw(copy);
-
-sub execute($) {
-	my $cmd = shift;
-	system($cmd);
-	use Carp qw(croak);
-	croak "\n\nError executing \n\t'$cmd'\n\n" if ( ( $? >> 8 ) != 0 || $? == -1 || ( $? & 127 ) != 0 );
-}
 
 if (! -e '../libtipsy.so') {
 	execute(qq(

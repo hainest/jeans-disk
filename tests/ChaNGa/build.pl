@@ -2,13 +2,8 @@ use strict;
 use warnings;
 use File::Copy qw(copy);
 use Getopt::Long qw(GetOptions);
-
-sub execute($) {
-	my $cmd = shift;
-	system($cmd);
-	use Carp qw(croak);
-	croak "\n\nError executing \n\t'$cmd'\n\n" if ( ( $? >> 8 ) != 0 || $? == -1 || ( $? & 127 ) != 0 );
-}
+use lib '..';
+use Utilities qw(execute);
 
 my ($charm, $changa, $clean, $smp, $njobs ) = ( 1, 1, 0 , 1, 2);
 GetOptions(
