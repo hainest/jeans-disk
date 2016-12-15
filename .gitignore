@@ -13,7 +13,3 @@ __pycache__
 .pydevproject
 .cproject
 .settings
-
-# test files
-test.cpp
-test.py
