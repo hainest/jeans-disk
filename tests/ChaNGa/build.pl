@@ -49,4 +49,8 @@ if ($changa) {
 	
 	copy('src/changa/ChaNGa', 'gas/') or die;
 	copy('src/changa/charmrun', 'gas/') or die;
+	
+	execute("cd src/changa; make clean; ./configure --enable-cooling=cosmo; make -j$njobs");
+	copy('src/changa/ChaNGa', 'gas+sfr/') or die;
+	copy('src/changa/charmrun', 'gas+sfr/') or die;
 }

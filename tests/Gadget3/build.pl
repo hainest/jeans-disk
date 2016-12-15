@@ -38,3 +38,16 @@ build();
 copy('src/Gadget3', 'nogas/') or die;
 copy('src/Gadget3', 'gas/') or die;
 
+open $fdOut, '>', 'src/gadget.make' or die;
+print $fdOut qq(
+$header
+OPT	+=  -DSFR
+OPT	+=  -DCOOLING
+OPT	+=  -DGENERATIONS=6
+OPT	+=  -DMOREPARAMS
+OPT	+=  -DSTELLARAGE
+);
+close $fdOut;
+build();
+copy('src/Gadget3', 'gas+sfr/') or die;
+
