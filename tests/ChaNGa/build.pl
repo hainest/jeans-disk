@@ -20,14 +20,13 @@ GetOptions(
 ) or exit;
 $smp  = ($smp) ? 'smp' : '';
 
+if($clean && !$changa && !$charm) {
+	&clean_charm();
+	&clean_changa();
+}
+
 if ($charm) {
-	if ($clean) {
-		print("Cleaning charm...\n");
-		execute( "
-			cd src/charm
-			rm -rf bin include lib lib_so tmp VERSION net-linux*
-		" );
-	}
+	&clean_charm() if ($clean);
 	execute( "
 		cd src/charm
 		./build ChaNGa net-linux-x86_64 $smp --enable-lbuserdata -j$njobs -optimize
@@ -35,13 +34,7 @@ if ($charm) {
 }
 
 if ($changa) {
-	if ($clean) {
-		print("Cleaning changa...\n");
-		execute( "
-			cd src/changa
-			rm -f *.a *.o config.status Makefile.dep Makefile cuda.mk ChaNGa charmrun
-		" );
-	}
+	&clean_changa() if ($clean);
 	
 	execute("cd src/changa; ./configure; make depends; make -j$njobs");
 	copy('src/changa/ChaNGa', 'nogas/') or die;
@@ -53,4 +46,17 @@ if ($changa) {
 	execute("cd src/changa; make clean; ./configure --enable-cooling=cosmo; make -j$njobs");
 	copy('src/changa/ChaNGa', 'gas+sfr/') or die;
 	copy('src/changa/charmrun', 'gas+sfr/') or die;
+}
+
+sub clean_charm() {
+	execute( "
+		cd src/charm
+		rm -rf bin include lib lib_so tmp VERSION net-linux*
+	" );
+}
+sub clean_changa() {
+	execute( "
+		cd src/changa
+		rm -f *.a *.o config.status Makefile.dep Makefile cuda.mk ChaNGa charmrun
+	" );	
 }
