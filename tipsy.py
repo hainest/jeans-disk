@@ -32,13 +32,13 @@ class File():
     @property
     def header(self):
         if self.hdr is None:
-            _read_header()
+            self._read_header()
         return self.hdr
 
     @property
     def darkmatter(self):
         if self.hdr is None:
-            _read_header()
+            self._read_header()
             
         if self.dark_particles is None:
             self.dark_particles = tipsy_dark_data(self.hdr.ndark)
@@ -48,7 +48,7 @@ class File():
     @property
     def stars(self):
         if self.hdr is None:
-            _read_header()
+            self._read_header()
 
         if self.star_particles is None:
             self.star_particles = tipsy_star_data(self.hdr.nstar)
@@ -58,7 +58,7 @@ class File():
     @property
     def gas(self):
         if self.hdr is None:
-            _read_header()
+            self._read_header()
             
         if self.gas_particles is None:
             self.gas_particles = tipsy_gas_data(self.hdr.ngas)
