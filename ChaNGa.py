@@ -152,7 +152,6 @@ all_parameters = """
 #   iStartStep                               Initial step numbering
 #   iWallRunTime                             <Maximum Wallclock time (in minutes) to run> = 0 = infinite
 #   killAt                                   Stop the simulation after this step
-#   nSmooth                                  Number of neighbors for smooth
 #
 #----- gravity_time_steps -----
 #   bEpsAccStep                              Use sqrt(eps/a) timestepping
@@ -173,7 +172,7 @@ all_parameters = """
 #   bLiveViz                                 enable real-time simulation render support (disabled)
 #   bOverwrite                               overwrite outputs (IGNORED)
 #   bParaRead                                enable/disable parallel reading of files (IGNORED)
-#   bParaWrite                               enable/disable parallel writing of files
+#   bParaWrite                               enable/disable parallel writing of files = 1
 #   bPrintBinary                             Print accelerations in Binary
 #   bStandard                                output in standard TIPSY binary format (IGNORED)
 #   dDumpFrameStep                           <number of steps between dumped frames> = -1 (disabled)
@@ -217,7 +216,7 @@ all_parameters = """
 #   dConstGamma                              <Ratio of specific heats> = 5/3
 #   ddHonHLimit                              <|dH|/H Limiter> = 0.1
 #   dFracFastGas                             <Fraction of Active Particles for Fast Gas>
-#   dGasConst                                <Gas Constant>
+#   dGasConst                                <Gas Constant> = 1.0
 #   dhMinOverSoft                            <Minimum h as a fraction of Softening> = 0.0
 #   dKpcUnit                                 <Kiloparsec/system length unit>
 #   dMeanMolWeight                           <Mean molecular weight in amu> = 1.0
@@ -225,6 +224,7 @@ all_parameters = """
 #   dResolveJeans                            <Fraction of pressure to resolve minimum Jeans mass> = 0.0
 #   iGasModel                                <Gas model employed> = 0 (Adiabatic)
 #   iViscosityLimiter                        <Viscosity Limiter Type> = 1
+#   nSmooth                                  Number of neighbors for smooth
 #
 #----- sph_timestepping -----
 #   bSphStep                                 <SPH timestepping>
