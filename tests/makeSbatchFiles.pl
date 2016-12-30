@@ -35,5 +35,5 @@ for my $type ('nogas', 'gas', 'gas+sfr') {
 	
 	open $fdOut, '>', "ChaNGa.$type.sbatch" or die "Unable to create $base_dir/ChaNGa.$type.sbatch: $!\n";
 	write_header($fdOut, 'cha'.$type, "$base_dir/ChaNGa/$type");
-	print $fdOut "$base_dir/ChaNGa/$type/charmrun ++mpiexec ++p $num_tasks ++ppn 1 $base_dir/ChaNGa/$type/ChaNGa $base_dir/ChaNGa/$type/$type.tipsy.ChaNGa.params\n\n";
+	print $fdOut "$base_dir/ChaNGa/$type/charmrun ++mpiexec ++p $num_tasks $base_dir/ChaNGa/$type/ChaNGa $base_dir/ChaNGa/$type/$type.tipsy.ChaNGa.params\n\n";
 }
