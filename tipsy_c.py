@@ -17,11 +17,9 @@ def _convert_array(x):
 
 def _make_array(size, ndims=1, zero=False):
     if ndims == 1:
-#         return np.empty(size, dtype=_native_float32_dtype) if not zero else np.zeros(size, dtype=_native_float32_dtype)
-        return np.zeros(size, dtype=_native_float32_dtype) 
+        return np.empty(size, dtype=_native_float32_dtype) if not zero else np.zeros(size, dtype=_native_float32_dtype)
     if ndims == 2:
-#         return np.empty((size, 3), dtype=_native_float32_dtype) if not zero else np.zeros((size, 3), dtype=_native_float32_dtype)
-        return np.zeros((size, 3), dtype=_native_float32_dtype)
+        return np.empty((size, 3), dtype=_native_float32_dtype) if not zero else np.zeros((size, 3), dtype=_native_float32_dtype)
     raise ValueError("tipsy only supports 1d and 2d arrays")
 
 def _pretty_print(obj, attrs):
