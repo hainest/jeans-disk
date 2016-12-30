@@ -19,8 +19,6 @@
 	optional arguments:
 	  -h, --help            show this help message and exit
 	  
-	  --convert-bh          Treat boundary particles as black holes
-	  
 	  --preserve-boundary-softening
 	                        Preserve softening lengths for boundary particles
 	                        
@@ -43,5 +41,5 @@ Simply run the included Makefile to build the C interface.
 - Only works under Python3
 - Only works with Gadget HDF5 files
 - ChaNGa has no support for stellar winds
-- BH physics not converted
+- Blackhole physics is not converted (ChaNGa does not support BHs)
 - Only basic cosmological parameters are converted

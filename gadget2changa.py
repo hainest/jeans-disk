@@ -56,7 +56,6 @@ parser = argparse.ArgumentParser(description='Convert GADGET2 files to ChaNGa fi
 parser.add_argument('gadget_file', metavar='GADGET', help='GADGET2 HDF5 file to convert')
 parser.add_argument('param_file', metavar='Parameter', help='GADGET2 parameter file to convert')
 parser.add_argument('out_dir', metavar='out_dir', help='Location of output')
-parser.add_argument('--convert-bh', action='store_true', help='Treat boundary particles as black holes')
 parser.add_argument('--preserve-boundary-softening', action='store_true', help='Preserve softening lengths for boundary particles')
 parser.add_argument('--no-param-list', action='store_true', help='Do not store a complete list ChaNGa parameters in "param_file"')
 parser.add_argument('--generations', type=int, help='Number of generations of stars each gas particle can spawn (see GENERATIONS in Gadget)')
@@ -135,7 +134,7 @@ with tipsy.streaming_writer(basename) as file:
             file.darkmatter(bulge.mass, bulge.positions, bulge.velocities, bulge.potential, gadget_params['SofteningBulge'], bulge.size)
     
     # Convert boundary particles to dark matter particles
-    if gadget_file.boundary is not None and not convert_bh:
+    if gadget_file.boundary is not None:
         boundary = gadget_file.boundary
         ndark += boundary.size
         boundary.mass *= mass_scale
@@ -167,15 +166,6 @@ with tipsy.streaming_writer(basename) as file:
         star.velocities *= velocity_scale
         file.stars(star.mass, star.positions, star.velocities, star.metals, star.t_form, star.potential,
                    gadget_params['SofteningStars'], star.size)
-    
-    # Convert boundary particles to black holes
-    if gadget_file.boundary is not None and convert_bh:
-        boundary = gadget_file.boundary
-        nstar += boundary.size
-        boundary.mass *= mass_scale
-        boundary.velocities *= velocity_scale
-        file.stars(boundary.mass, boundary.positions, boundary.velocities, None, None, boundary.potential,
-                   gadget_params['SofteningBndry'], boundary.size, is_blackhole=True)
 
 # update the header
 with tipsy.streaming_writer(basename, 'r+b') as file:
