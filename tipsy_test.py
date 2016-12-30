@@ -12,19 +12,13 @@ def check(x, true, msg):
 
 def generate_data(size, rank):
     data = [None] * rank
-#     data[0] = np.random.rand(size)
-#     data[1] = np.random.rand(size, 3)
-#     data[2] = np.random.rand(size, 3)
-#     
-#     for i in range(rank - 3):
-#         data[i + 3] = np.random.rand(size)
-    data[0] = np.zeros(size)      + 0.0
-    data[1] = np.zeros((size, 3)) + 1.0
-    data[2] = np.zeros((size, 3)) + 2.0
-    
+    data[0] = np.random.rand(size)
+    data[1] = np.random.rand(size, 3)
+    data[2] = np.random.rand(size, 3)
+     
     for i in range(rank - 3):
-        data[i + 3] = np.zeros(size) + float(i + 3)
-
+        data[i + 3] = np.random.rand(size)
+    
     return data
 
 def run_test(filename, is_xdr, ngas, ndark, nstar):
