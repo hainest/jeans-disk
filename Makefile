@@ -2,16 +2,21 @@ CC       = gcc
 CCSTD    = -std=c99
 CXX      = g++
 CXXSTD   = -std=c++14
-WFLAGS   = -Wall -Wextra -Wconversion -Wshadow
+WFLAGS   = -Wall -Wextra -Wconversion -Wshadow -Wsign-compare
 OPTIMIZE = -m64 -O3 -march=native -mfpmath=sse -DNDEBUG
 
-SRCS  = tipsyio.c
+SRCS  = tipsy_py_xdr.c tipsyio_xdr.c tipsyio_err.c tipsyio_native.c tipsy_py_native.c
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 LIB   = libtipsy.so
 
-TEST_SRCS := test.cpp
+TEST_SRCS := tipsyio_test.cpp
 TEST_OBJS := $(patsubst %.cpp, %.o, $(TEST_SRCS))
-TEST_EXEC := g2c
+TEST_EXEC := tipsyio_test
+
+debug: SANITIZER := address
+debug: LDFLAGS	 := -fuse-ld=gold -fsanitize=$(SANITIZER)
+debug: OPTIMIZE  := -O0 -g -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
+debug: all
 
 .DEFAULT_GOAL := all
 
@@ -20,7 +25,7 @@ all: $(LIB)
 
 $(LIB): $(OBJS)
 	@ echo Building shared library '$@'...
-	@ $(CC) -shared -Wl,-soname,$(LIB) -o $@ $^
+	@ $(CC) -shared -Wl,-soname,$(LIB) $(LDFLAGS) -o $@ $^
 
 %.o: %.c
 	@ echo Compiling $<...
@@ -28,11 +33,13 @@ $(LIB): $(OBJS)
 
 %.o: %.cpp
 	@ echo Compiling $<...
-	@ $(CXX) $(CXXSTD) $(OPTIMIZE) $(WFLAGS) $(CFLAGS) -c $< -o $@
+	@ $(CXX) $(CXXSTD) $(OPTIMIZE) $(WFLAGS) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: test
-$(TEST_EXEC): $(TEST_OBJS) tipsyio.o
-	@ $(CXX) $^ -o $@
+$(TEST_EXEC): $(TEST_OBJS) tipsyio_xdr.o tipsyio_err.o
+	@ $(CXX) $(LDFLAGS) $^ -o $@
+
+.PHONY: check
+check: $(TEST_EXEC)
 
 .PHONY: dist
 dist:
@@ -45,4 +52,4 @@ clean:
 
 .PHONY: dist-clean
 dist-clean: clean
-	@ rm -rf $(LIB) __pycache__
+	@ rm -rf $(LIB) $(TEST_EXEC) __pycache__

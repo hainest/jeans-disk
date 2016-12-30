@@ -1,96 +1,38 @@
-import gadget
-import numpy as np
-from tipsy_c import *
+import tipsy_xdr
+import tipsy_native
 
 class File():
-    """Read or write a tipsy file using multiple streams of data."""
-    def __init__(self, filename, mode='rb'):
-        self.lib = load_tipsy()
-        self.lib.tipsy_open_file(ctypes.c_char_p(bytes(filename, 'utf-8')),
-                                 ctypes.c_char_p(bytes(mode, 'utf-8')))
-        
-        self.hdr = None
-        self.dark_particles = None
-        self.star_particles = None
-        self.gas_particles = None
+    """A simple wrapper around a read-only Tipsy file."""
+    def __init__(self, filename, is_xdr=True):
+        if is_xdr:
+            self.file = tipsy_xdr.File(filename)
+        else:
+            self.file = tipsy_native.File(filename)
 
     def close(self):
-        self.lib.tipsy_close_file()
+        self.file.close()
 
     def __enter__(self):
-        return self
+        return self.file
     
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+        self.file.close()
         return False  # always re-raise exceptions
-    
-    def _read_header(self):
-        """For internal use only"""
-        self.hdr = tipsy_header()
-        self.lib.tipsy_read_header(ctypes.byref(self.hdr))
-    
-    @property
-    def header(self):
-        if self.hdr is None:
-            self._read_header()
-        return self.hdr
-
-    @property
-    def darkmatter(self):
-        if self.hdr is None:
-            self._read_header()
-            
-        if self.dark_particles is None:
-            self.dark_particles = tipsy_dark_data(self.hdr.ndark)
-            self.lib.tipsy_read_dark_particles(ctypes.byref(self.dark_particles))
-        return self.dark_particles
-        
-    @property
-    def stars(self):
-        if self.hdr is None:
-            self._read_header()
-
-        if self.star_particles is None:
-            self.star_particles = tipsy_star_data(self.hdr.nstar)
-            self.lib.tipsy_read_star_particles(ctypes.byref(self.star_particles))
-        return self.star_particles
-
-    @property
-    def gas(self):
-        if self.hdr is None:
-            self._read_header()
-            
-        if self.gas_particles is None:
-            self.gas_particles = tipsy_gas_data(self.hdr.ngas)
-            self.lib.tipsy_read_gas_particles(ctypes.byref(self.gas_particles))
-        return self.gas_particles
 
 class streaming_writer():
-    def __init__(self, filename, mode='wb'):
-        self.lib = load_tipsy()
-        self.lib.tipsy_open_file(ctypes.c_char_p(bytes(filename, 'utf-8')),
-                                 ctypes.c_char_p(bytes(mode, 'utf-8')))
-    
-    def header(self, time, ngas, ndark, nstars):
-        self.lib.tipsy_write_header(time, ngas, ndark, nstars)
-
-    def gas(self, mass, pos, vel, rho, temp, hsmooth, metals, phi, size):
-        self.lib.tipsy_write_gas_particles(mass, pos, vel, rho, temp, hsmooth, metals, phi, size)
-    
-    def darkmatter(self, mass, pos, vel, phi, softening, size):
-        softening = np.asscalar(np.array(softening, dtype=np.float32))
-        self.lib.tipsy_write_dark_particles(mass, pos, vel, phi, softening, size)    
-    
-    def stars(self, mass, pos, vel, metals, tform, phi, softening, size, is_blackhole=False):
-        softening = np.asscalar(np.array(softening, dtype=np.float32))
-        self.lib.tipsy_write_star_particles(mass, pos, vel, metals, tform, phi, softening, size, is_blackhole)
+    def __init__(self, filename, is_xdr=True):
+        """A simple wrapper around a write-only Tipsy file."""
+        if is_xdr:
+            self.file = tipsy_xdr.streaming_writer(filename)
+        else:
+            self.file = tipsy_native.streaming_writer(filename)
 
     def close(self):
-        self.lib.tipsy_close_file()
+        self.file.close()
 
     def __enter__(self):
-        return self
+        return self.file
     
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
-        return False  # always re-raise exceptions
+        self.file.close()
+        return False  # always re-raise exceptions            
