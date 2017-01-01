@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-class gadget_particle:
+class basic_particle():
     def __init__(self, data, mass, header):
         self.positions = np.empty(data['Coordinates'].shape, data['Coordinates'].dtype)
         data['Coordinates'].read_direct(self.positions)
@@ -22,7 +22,7 @@ class gadget_particle:
              self.potential = np.empty(data['Potential'].shape, data['Potential'].dtype)
              data['Potential'].read_direct(self.potential)
 
-class gadget_particle_with_metals(gadget_particle):
+class particle_with_metals(basic_particle):
     def __init__(self, data, mass, header):
         super().__init__(data, mass, header)
         self.t_form = None
@@ -41,7 +41,7 @@ class gadget_particle_with_metals(gadget_particle):
             else:
                 print('Star formation and metals enabled, but no stellar metals found. Skipping...')
 
-class gadget_gas_particle(gadget_particle_with_metals):
+class gas_particle(particle_with_metals):
     def __init__(self, data, mass, header):
         super().__init__(data, mass, header)
 
@@ -54,7 +54,6 @@ class gadget_gas_particle(gadget_particle_with_metals):
         self.hsml = np.empty(data['SmoothingLength'].shape, data['SmoothingLength'].dtype)
         data['SmoothingLength'].read_direct(self.hsml)
 
-        
         self.electron_density = None
         if header['Flag_Cooling']:
             self.electron_density = np.empty(data['ElectronAbundance'].shape, data['ElectronAbundance'].dtype)
@@ -93,37 +92,37 @@ class File:
     @property
     def gas(self):
         if self.gas_particles is None and 'PartType0' in self.file.keys():
-            self.gas_particles = gadget_gas_particle(self.file['PartType0'], self.header['MassTable'][()][0], self.header)
+            self.gas_particles = gas_particle(self.file['PartType0'], self.header['MassTable'][()][0], self.header)
         return self.gas_particles
 
     @property
     def halo(self):
         if self.halo_particles is None and 'PartType1' in self.file.keys():
-            self.halo_particles = gadget_particle(self.file['PartType1'], self.header['MassTable'][()][1], self.header)
+            self.halo_particles = basic_particle(self.file['PartType1'], self.header['MassTable'][()][1], self.header)
         return self.halo_particles
     
     @property
     def disk(self):
         if self.disk_particles is None and 'PartType2' in self.file.keys():
-            self.disk_particles = gadget_particle(self.file['PartType2'], self.header['MassTable'][()][2], self.header)
+            self.disk_particles = basic_particle(self.file['PartType2'], self.header['MassTable'][()][2], self.header)
         return self.disk_particles
         
     @property
     def bulge(self):
         if self.bulge_particles is None and 'PartType3' in self.file.keys():
-            self.bulge_particles = gadget_particle_with_metals(self.file['PartType3'], self.header['MassTable'][()][3], self.header)
+            self.bulge_particles = particle_with_metals(self.file['PartType3'], self.header['MassTable'][()][3], self.header)
         return self.bulge_particles
     
     @property
     def stars(self):
         if self.star_particles is None and 'PartType4' in self.file.keys():
-            self.star_particles = gadget_particle_with_metals(self.file['PartType4'], self.header['MassTable'][()][4], self.header)
+            self.star_particles = particle_with_metals(self.file['PartType4'], self.header['MassTable'][()][4], self.header)
         return self.star_particles
 
     @property
     def boundary(self):
         if self.boundary_particles is None and 'PartType5' in self.file.keys():
-            self.boundary_particles = gadget_particle(self.file['PartType5'], self.header['MassTable'][()][5], self.header)
+            self.boundary_particles = basic_particle(self.file['PartType5'], self.header['MassTable'][()][5], self.header)
         return self.boundary_particles
 
 class Parameter_file():
