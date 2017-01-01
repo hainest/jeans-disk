@@ -84,32 +84,26 @@ class File:
 
             self.gas = None
             if file.__contains__('PartType0'):
-                print('GADGET: Reading gas...')
                 self.gas = gadget_gas_particle(file['PartType0'], self.header['MassTable'][()][0], self.header)
 
             self.halo = None
             if file.__contains__('PartType1'):
-                print('GADGET: Reading halo...')
                 self.halo = gadget_particle(file['PartType1'], self.header['MassTable'][()][1], self.header)
                 
             self.disk = None
             if file.__contains__('PartType2'):
-                print('GADGET: Reading disk...')
                 self.disk = gadget_particle(file['PartType2'], self.header['MassTable'][()][2], self.header)
             
             self.bulge = None
             if file.__contains__('PartType3'):
-                print('GADGET: Reading bulge...')
                 self.bulge = gadget_particle_with_metals(file['PartType3'], self.header['MassTable'][()][3], self.header)
             
             self.stars = None
             if file.__contains__('PartType4'):
-                print('GADGET: Reading star...')
                 self.stars = gadget_particle_with_metals(file['PartType4'], self.header['MassTable'][()][4], self.header)
 
             self.boundary = None
             if file.__contains__('PartType5'):
-                print('GADGET: Reading boundary...')
                 self.boundary = gadget_particle(file['PartType5'], self.header['MassTable'][()][5], self.header)
 
 class Parameter_file():
