@@ -44,15 +44,7 @@ class gadget_particle_with_metals(gadget_particle):
 class gadget_gas_particle(gadget_particle_with_metals):
     def __init__(self, data, mass, header):
         super().__init__(data, mass, header)
-        # If not using traditional SPH, then this is really
-        #
-        #    meanweight = 4.0 / (1 + 3 * HYDROGEN_MASSFRAC)
-        #    All.MinEgySpec = 1 / meanweight * (1.0 / GAMMA_MINUS1) * (BOLTZMANN / PROTONMASS) * All.MinGasTemp
-        #    All.MinEgySpec *= All.UnitMass_in_g / All.UnitEnergy_in_cgs
-        #
-        #    max(All.MinEgySpec,
-        #        SphP[pindex].Entropy / GAMMA_MINUS1 * pow(SphP[pindex].d.Density * a3inv, GAMMA_MINUS1))
-        #
+
         self.internal_energy = np.empty(data['InternalEnergy'].shape, data['InternalEnergy'].dtype)
         data['InternalEnergy'].read_direct(self.internal_energy)
         
