@@ -67,36 +67,64 @@ class gadget_gas_particle(gadget_particle_with_metals):
 
 class File:
     def __init__(self, fname):
-        with h5py.File(fname, 'r') as file:
-            self.header = {}
-            
-            # copy.deepcopy was failing, so just do it manually
-            for k, v in file['Header'].attrs.items():
-                self.header[k] = v
+        self.file = h5py.File(fname, 'r')
+        
+        self.gas_particles = None
+        self.halo_particles = None
+        self.disk_particles = None
+        self.bulge_particles = None
+        self.star_particles = None
+        self.boundary_particles = None
+        
+        self.header = {}
+        for k, v in file['Header'].attrs.items():
+            self.header[k] = v
 
-            self.gas = None
-            if 'PartType0' in file.keys():
-                self.gas = gadget_gas_particle(file['PartType0'], self.header['MassTable'][()][0], self.header)
+    def close(self):
+        self.file.close()
 
-            self.halo = None
-            if 'PartType1' in file.keys():
-                self.halo = gadget_particle(file['PartType1'], self.header['MassTable'][()][1], self.header)
-                
-            self.disk = None
-            if 'PartType2' in file.keys():
-                self.disk = gadget_particle(file['PartType2'], self.header['MassTable'][()][2], self.header)
-            
-            self.bulge = None
-            if 'PartType3' in file.keys():
-                self.bulge = gadget_particle_with_metals(file['PartType3'], self.header['MassTable'][()][3], self.header)
-            
-            self.stars = None
-            if 'PartType4' in file.keys():
-                self.stars = gadget_particle_with_metals(file['PartType4'], self.header['MassTable'][()][4], self.header)
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        return False  # always re-raise exceptions
+    
+    @property
+    def gas(self):
+        if self.gas_particles is None and 'PartType0' in self.file.keys():
+            self.gas_particles = gadget_gas_particle(self.file['PartType0'], self.header['MassTable'][()][0], self.header)
+        return self.gas_particles
 
-            self.boundary = None
-            if 'PartType5' in file.keys():
-                self.boundary = gadget_particle(file['PartType5'], self.header['MassTable'][()][5], self.header)
+    @property
+    def halo(self):
+        if self.halo_particles is None and 'PartType1' in self.file.keys():
+            self.halo_particles = gadget_particle(self.file['PartType1'], self.header['MassTable'][()][1], self.header)
+        return self.halo_particles
+    
+    @property
+    def disk(self):
+        if self.disk_particles is None and 'PartType2' in self.file.keys():
+            self.disk_particles = gadget_particle(self.file['PartType2'], self.header['MassTable'][()][2], self.header)
+        return self.disk_particles
+        
+    @property
+    def bulge(self):
+        if self.bulge_particles is None and 'PartType3' in self.file.keys():
+            self.bulge_particles = gadget_particle_with_metals(self.file['PartType3'], self.header['MassTable'][()][3], self.header)
+        return self.bulge_particles
+    
+    @property
+    def stars(self):
+        if self.star_particles is None and 'PartType4' in self.file.keys():
+            self.star_particles = gadget_particle_with_metals(self.file['PartType4'], self.header['MassTable'][()][4], self.header)
+        return self.star_particles
+
+    @property
+    def boundary(self):
+        if self.boundary_particles is None and 'PartType5' in self.file.keys():
+            self.boundary_particles = gadget_particle(self.file['PartType5'], self.header['MassTable'][()][5], self.header)
+        return self.boundary_particles
 
 class Parameter_file():
     def __init__(self, fname):
