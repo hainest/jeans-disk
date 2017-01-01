@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rpc/xdr.h>
+#include "tipsy.h"
 
 typedef enum { TIPSY_XDR_ENCODE, TIPSY_XDR_DECODE } tipsy_xdr_dir;
 
