@@ -9,10 +9,6 @@ SRCS  = tipsy_py_xdr.c tipsyio_xdr.c tipsyio_err.c tipsyio_native.c tipsy_py_nat
 OBJS := $(patsubst %.c, %.o, $(SRCS))
 LIB   = libtipsy.so
 
-TEST_SRCS := tipsyio_test.cpp
-TEST_OBJS := $(patsubst %.cpp, %.o, $(TEST_SRCS))
-TEST_EXEC := tipsyio_test
-
 debug: SANITIZER := address
 debug: LDFLAGS	 := -fuse-ld=gold -fsanitize=$(SANITIZER)
 debug: OPTIMIZE  := -O0 -g -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
@@ -31,15 +27,8 @@ $(LIB): $(OBJS)
 	@ echo Compiling $<...
 	@ $(CC) $(CCSTD) $(OPTIMIZE) $(WFLAGS) $(CFLAGS) -fPIC -c $< -o $@
 
-%.o: %.cpp
-	@ echo Compiling $<...
-	@ $(CXX) $(CXXSTD) $(OPTIMIZE) $(WFLAGS) $(CXXFLAGS) -c $< -o $@
-
 $(TEST_EXEC): $(TEST_OBJS) tipsyio_xdr.o tipsyio_err.o
 	@ $(CXX) $(LDFLAGS) $^ -o $@
-
-.PHONY: check
-check: $(TEST_EXEC)
 
 .PHONY: dist
 dist:
