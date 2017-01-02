@@ -26,6 +26,7 @@ class particle_with_metals(basic_particle):
     def __init__(self, data, mass, header):
         super().__init__(data, mass, header)
         self.t_form = None
+
         if header.flag_sfr and header.flag_stellarage:
             if 'StellarFormationTime' in data.keys():
                 self.t_form = np.empty(data['StellarFormationTime'].shape, data['StellarFormationTime'].dtype)
