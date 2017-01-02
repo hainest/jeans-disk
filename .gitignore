@@ -8,6 +8,7 @@ __pycache__
 *.tipsy
 *.params
 *.sbatch
+*.pickle
 
 
 # Eclipse folders
