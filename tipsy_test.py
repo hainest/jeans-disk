@@ -45,18 +45,18 @@ def run_test(filename, is_xdr, ngas, ndark, nstar):
         check(hdr.nstar, nstar, 'hdr.nstar')
         
         data = f.gas
-        if data.size > 0:
+        if data:
             attrs = ['mass', 'pos', 'vel', 'rho', 'temp', 'hsmooth', 'metals', 'phi']
             for a in attrs:
                 check(getattr(data, a), gas[attrs.index(a)], 'gas({0:d},{1:d},{2:d}).{3:s}'.format(ngas, ndark, nstar, a))
         data = f.darkmatter
-        if data.size > 0:
+        if data:
             attrs = ['mass', 'pos', 'vel', 'soft', 'phi']
             for a in attrs:
                 check(getattr(data, a), dark[attrs.index(a)], 'dark({0:d},{1:d},{2:d}).{3:s}'.format(ngas, ndark, nstar, a))
   
         data = f.stars
-        if data.size > 0:
+        if data:
             attrs = ['mass', 'pos', 'vel', 'metals', 'tform', 'soft', 'phi']
             for a in attrs:
                 check(getattr(data, a), star[attrs.index(a)], 'star({0:d},{1:d},{2:d}).{3:s}'.format(ngas, ndark, nstar, a))
