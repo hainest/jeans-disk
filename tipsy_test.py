@@ -2,7 +2,7 @@ import tipsy
 import numpy as np
 
 def check(x, true, msg):
-    tol = 1e-6
+    tol = 1e-7
     if np.isscalar(x):
         if not abs(x - true) < tol:
             raise ValueError(msg + ' should be ' + str(true) + ', but found ' + str(x))
@@ -60,7 +60,6 @@ def run_test(filename, is_xdr, ngas, ndark, nstar):
             attrs = ['mass', 'pos', 'vel', 'metals', 'tform', 'soft', 'phi']
             for a in attrs:
                 check(getattr(data, a), star[attrs.index(a)], 'star({0:d},{1:d},{2:d}).{3:s}'.format(ngas, ndark, nstar, a))
-
 #----------------------------------------------------------------------------------------
 
 filename = 'test.tipsy'
