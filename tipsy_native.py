@@ -36,8 +36,7 @@ class File():
     @property
     def gas(self):
         if self.hdr.ngas == 0:
-            self.gas_particles = tipsy_c.gas_data()
-            return self.gas_particles
+            return None
         
         if self.gas_particles is None:
             self.gas_particles = tipsy_c.gas_data.from_size(self.hdr.ngas)
@@ -48,8 +47,7 @@ class File():
     @property
     def darkmatter(self):
         if self.hdr.ndark == 0:
-            self.dark_particles = tipsy_c.dark_data()
-            return self.dark_particles
+            return None
 
         if self.dark_particles is None:
             self.dark_particles = tipsy_c.dark_data.from_size(self.hdr.ndark)
@@ -60,8 +58,7 @@ class File():
     @property
     def stars(self):
         if self.hdr.nstar == 0:
-            self.star_particles = tipsy_c.star_data()
-            return self.star_particles
+            return None
         
         if self.star_particles is None:
             self.star_particles = tipsy_c.star_data.from_size(self.hdr.nstar)
