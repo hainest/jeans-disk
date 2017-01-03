@@ -83,11 +83,11 @@ with open(basename + '.ChaNGa.params', 'w') as f:
         f.write(ChaNGa.all_parameters)
 
 ##################################################################################
-time = float(gadget_file.header['Time'])
+time = float(gadget_file.header.time)
 is_cosmological = int(gadget_params['ComovingIntegrationOn']) == 1
 
 # Gadget units have an extra sqrt(a) in the internal velocities
-velocity_scale = math.sqrt(1.0 + float(gadget_file.header['Redshift']))
+velocity_scale = math.sqrt(1.0 + float(gadget_file.header.redshift))
 
 hubble = 1.0
 if is_cosmological:
@@ -107,14 +107,17 @@ with tipsy.streaming_writer(basename) as file:
         gas_temp = convert_U_to_temperature(gadget_params, gadget_file, hubble)
         gas.mass *= mass_scale
         gas.velocities *= velocity_scale
-        file.gas(gas.mass, gas.positions, gas.velocities, gas.density, gas_temp, gas.hsml, gas.metals, gas.potential, gas.size)
+        metals = gas.metals if gas.metals is not None else np.zeros(gas.size)
+        pot = gas.potential if gas.potential is not None else np.zeros(gas.size)
+        file.gas(gas.mass, gas.positions, gas.velocities, gas.density, gas_temp, gas.hsml, metals, pot, gas.size)
     
     if gadget_file.halo is not None:
         halo = gadget_file.halo
         ndark += halo.size
         halo.mass *= mass_scale
         halo.velocities *= velocity_scale
-        file.darkmatter(halo.mass, halo.positions, halo.velocities, halo.potential, gadget_params['SofteningHalo'], halo.size)
+        pot = halo.potential if halo.potential is not None else np.zeros(halo.size)
+        file.darkmatter(halo.mass, halo.positions, halo.velocities, gadget_params['SofteningHalo'], pot, halo.size)
         
     # In ChaNGa, cosmological simulations treat disk and bulge particles
     # as dark matter particles
@@ -124,14 +127,16 @@ with tipsy.streaming_writer(basename) as file:
             ndark += disk.size
             disk.mass *= mass_scale
             disk.velocities *= velocity_scale
-            file.darkmatter(disk.mass, disk.positions, disk.velocities, disk.potential, gadget_params['SofteningDisk'], disk.size)
+            pot = disk.potential if disk.potential is not None else np.zeros(disk.size)
+            file.darkmatter(disk.mass, disk.positions, disk.velocities, gadget_params['SofteningDisk'], disk.potential, disk.size)
         
         if gadget_file.bulge is not None:
             bulge = gadget_file.bulge
             ndark += bulge.size
             bulge.mass *= mass_scale
             bulge.velocities *= velocity_scale
-            file.darkmatter(bulge.mass, bulge.positions, bulge.velocities, bulge.potential, gadget_params['SofteningBulge'], bulge.size)
+            pot = bulge.potential if bulge.potential is not None else np.zeros(bulge.size)
+            file.darkmatter(bulge.mass, bulge.positions, bulge.velocities, gadget_params['SofteningBulge'], pot, bulge.size)
     
     # Convert boundary particles to dark matter particles
     if gadget_file.boundary is not None:
@@ -140,7 +145,8 @@ with tipsy.streaming_writer(basename) as file:
         boundary.mass *= mass_scale
         boundary.velocities *= velocity_scale
         eps = gadget_params['SofteningBndry'] if args.preserve_boundary_softening else gadget_params['SofteningHalo']
-        file.darkmatter(boundary.mass, boundary.positions, boundary.velocities, boundary.potential, eps, boundary.size)
+        pot = boundary.potential if boundary.potential is not None else np.zeros(boundary.size)
+        file.darkmatter(boundary.mass, boundary.positions, boundary.velocities, eps, pot, boundary.size)
         
     if not is_cosmological:
         if gadget_file.disk is not None:
@@ -148,24 +154,33 @@ with tipsy.streaming_writer(basename) as file:
             nstar += disk.size
             disk.mass *= mass_scale
             disk.velocities *= velocity_scale
-            file.stars(disk.mass, disk.positions, disk.velocities, None, None, disk.potential,
-                      gadget_params['SofteningDisk'], disk.size)
+            metals = np.zeros(disk.size)
+            tform = np.zeros(disk.size)
+            file.stars(disk.mass, disk.positions, disk.velocities, metals, tform, gadget_params['SofteningDisk'],
+                       disk.potential, disk.size)
+            metals = tform = None
         
         if gadget_file.bulge is not None:
             bulge = gadget_file.bulge
             nstar += bulge.size
             bulge.mass *= mass_scale
             bulge.velocities *= velocity_scale
-            file.stars(bulge.mass, bulge.positions, bulge.velocities, bulge.metals, bulge.t_form, bulge.potential,
-                      gadget_params['SofteningBulge'], bulge.size)
+            metals = bulge.metals if bulge.metals is not None else np.zeros(bulge.size)
+            tform = bulge.t_form if bulge.t_form is not None else np.zeros(bulge.size)
+            pot = bulge.potential if bulge.potential is not None else np.zeros(bulge.size)
+            file.stars(bulge.mass, bulge.positions, bulge.velocities, metals, tform,
+                       gadget_params['SofteningBulge'], pot, bulge.size)
 
     if gadget_file.stars is not None:
         star = gadget_file.stars
         nstar += star.size
         star.mass *= mass_scale
         star.velocities *= velocity_scale
-        file.stars(star.mass, star.positions, star.velocities, star.metals, star.t_form, star.potential,
-                   gadget_params['SofteningStars'], star.size)
+        metals = star.metals if star.metals is not None else np.zeros(star.size)
+        tform = star.t_form if star.t_form is not None else np.zeros(star.size)
+        pot = star.potential if star.potential is not None else np.zeros(star.size)
+        file.stars(star.mass, star.positions, star.velocities, metals, tform,
+                   gadget_params['SofteningStars'], pot, star.size)
 
 # update the header
 with tipsy.streaming_writer(basename, 'r+b') as file:
