@@ -12,7 +12,11 @@ _native_float32_dtype = np.dtype('=f')
 _array_1d_float32 = npct.ndpointer(dtype=_native_float32_dtype, ndim=1, flags=('C','O','W','A'))
 _array_2d_float32 = npct.ndpointer(dtype=_native_float32_dtype, ndim=2, flags=('C','O','W','A'))
 
-def _convert_array(x):
+def _convert_array(x, name):
+    if x is None:
+        raise ValueError(name + ' cannot be None')
+    if not isinstance(x, np.ndarray):
+        raise TypeError(name + ' is not a numpy array')
     return np.require(x, dtype=_native_float32_dtype, requirements=['C_CONTIGUOUS', 'ALIGNED', 'WRITEABLE', 'OWNDATA', 'ENSUREARRAY'])
 
 def _make_array(size, ndims=1, zero=False):
@@ -157,14 +161,14 @@ class gas_data():
     @classmethod
     def from_external(cls, mass, pos, vel, rho, temp, hsmooth, metals, phi, size):
         self = cls()
-        self.mass = _convert_array(mass)
-        self.pos = _convert_array(pos)
-        self.vel = _convert_array(vel)
-        self.rho = _convert_array(rho)
-        self.temp = _convert_array(temp)
-        self.hsmooth = _convert_array(hsmooth)
-        self.metals = _convert_array(metals)
-        self.phi = _convert_array(phi)
+        self.mass = _convert_array(mass, 'mass')
+        self.pos = _convert_array(pos, 'pos')
+        self.vel = _convert_array(vel, 'vel')
+        self.rho = _convert_array(rho, 'rho')
+        self.temp = _convert_array(temp, 'temp')
+        self.hsmooth = _convert_array(hsmooth, 'hsmooth')
+        self.metals = _convert_array(metals, 'metals')
+        self.phi = _convert_array(phi, 'phi')
         self.size = size
         self.c_data = gas_data.struct.from_external(self)
         return self
@@ -217,16 +221,16 @@ class dark_data():
     @classmethod
     def from_external(cls, mass, pos, vel, soft, phi, size):
         self = cls()
-        self.mass = _convert_array(mass)
-        self.pos = _convert_array(pos)
-        self.vel = _convert_array(vel)
-        self.phi = _convert_array(phi)
+        self.mass = _convert_array(mass, 'mass')
+        self.pos = _convert_array(pos, 'pos')
+        self.vel = _convert_array(vel, 'vel')
+        self.phi = _convert_array(phi, 'phi')
         
-        if np.isscalar(soft):
+        if soft is not None and np.isscalar(soft):
             self.soft = _make_array(size, zero=True)
-            self.soft += soft
+            self.soft += np.asscalar(np.array(soft, dtype=_native_float32_dtype))
         else:
-            self.soft = _convert_array(soft)
+            self.soft = _convert_array(soft, 'soft')
         
         self.size = size
         self.c_data = dark_data.struct.from_external(self)
@@ -286,18 +290,18 @@ class star_data():
     @classmethod
     def from_external(cls, mass, pos, vel, metals, tform, soft, phi, size):
         self = cls()
-        self.mass = _convert_array(mass)
-        self.pos = _convert_array(pos)
-        self.vel = _convert_array(vel)
-        self.metals = _convert_array(metals)
-        self.tform = _convert_array(tform)
-        self.phi = _convert_array(phi)
+        self.mass = _convert_array(mass, 'mass')
+        self.pos = _convert_array(pos, 'pos')
+        self.vel = _convert_array(vel, 'vel')
+        self.metals = _convert_array(metals, 'metals')
+        self.tform = _convert_array(tform, 'tform')
+        self.phi = _convert_array(phi, 'phi')
         
-        if np.isscalar(soft):
+        if soft is not None and np.isscalar(soft):
             self.soft = _make_array(size, zero=True)
-            self.soft += soft
+            self.soft += np.asscalar(np.array(soft, dtype=_native_float32_dtype))
         else:
-            self.soft = _convert_array(soft)
+            self.soft = _convert_array(soft, 'soft')
         
         self.size = size
         self.c_data = star_data.struct.from_external(self)
