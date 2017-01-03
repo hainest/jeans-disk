@@ -68,13 +68,14 @@ class File():
     
 class streaming_writer():
     """A write-only Tipsy XDR (aka 'standard') file."""
-    def __init__(self, filename):
+    def __init__(self, filename, mode):
         self.lib = _load_tipsy()
 
         # fopen in tipsy_py_init_xdr fails without this here
         print()
         cfname = ctypes.c_char_p(bytes(filename, 'utf-8'))
-        self.lib.tipsy_py_init_writer_xdr(cfname)
+        cmode = ctypes.c_char_p(bytes(mode, 'utf-8'))
+        self.lib.tipsy_py_init_writer_xdr(cfname, cmode)
     
     def header(self, time, ngas, ndark, nstars):
         tmp = tipsy_c.header.from_external(time, ngas, ndark, nstars)
@@ -121,7 +122,7 @@ def _load_tipsy():
     lib.tipsy_py_init_reader_xdr.argtypes = [ctypes.c_char_p]
     
     lib.tipsy_py_init_writer_xdr.restype = decode_err
-    lib.tipsy_py_init_writer_xdr.argtypes = [ctypes.c_char_p]
+    lib.tipsy_py_init_writer_xdr.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
     
     lib.tipsy_py_destroy_xdr.restype = None
     lib.tipsy_py_destroy_xdr.argtypes = []

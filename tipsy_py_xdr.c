@@ -4,10 +4,10 @@
 static tipsy_xdr_stream xdr_stream;
 
 int tipsy_py_init_reader_xdr(char const* filename) {
-	return tipsy_init_xdr(&xdr_stream, filename, TIPSY_XDR_DECODE);
+	return tipsy_init_xdr(&xdr_stream, filename, "rb", TIPSY_XDR_DECODE);
 }
-int tipsy_py_init_writer_xdr(char const* filename) {
-	return tipsy_init_xdr(&xdr_stream, filename, TIPSY_XDR_ENCODE);
+int tipsy_py_init_writer_xdr(char const* filename, char const* mode) {
+	return tipsy_init_xdr(&xdr_stream, filename, mode, TIPSY_XDR_ENCODE);
 }
 void tipsy_py_destroy_xdr() {
 	tipsy_destroy_xdr(&xdr_stream);

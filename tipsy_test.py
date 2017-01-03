@@ -15,7 +15,7 @@ def generate_data(size, rank):
     data[0] = np.random.rand(size)
     data[1] = np.random.rand(size, 3)
     data[2] = np.random.rand(size, 3)
-     
+
     for i in range(rank - 3):
         data[i + 3] = np.random.rand(size)
     
@@ -24,7 +24,7 @@ def generate_data(size, rank):
 def run_test(filename, is_xdr, ngas, ndark, nstar):
     time = 10.0
  
-    with tipsy.streaming_writer(filename, is_xdr) as f:
+    with tipsy.streaming_writer(filename, is_xdr=is_xdr) as f:
         f.header(time, ngas, ndark, nstar)
         if ngas > 0:
             gas = generate_data(ngas, 8)

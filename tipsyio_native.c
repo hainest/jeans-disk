@@ -8,14 +8,14 @@ inline static void reset_fd(FILE* fd, size_t offset) {
 }
 
 /*************************************************************************************************************/
-int tipsy_init_native(tipsy_native_stream* stream, char const* filename, tipsy_native_dir dir) {
+int tipsy_init_native(tipsy_native_stream* stream, char const* filename, char const* mode, tipsy_native_dir dir) {
 	switch (dir) {
 	case TIPSY_NATIVE_ENCODE:
-		stream->fd = fopen(filename, "wb");
+		stream->fd = fopen(filename, mode);
 		if (errno != 0) { return errno; }
 		return 0;
 	case TIPSY_NATIVE_DECODE:
-		stream->fd = fopen(filename, "rb");
+		stream->fd = fopen(filename, mode);
 		if (errno != 0) { return errno; }
 		return 0;
 	default:

@@ -14,7 +14,7 @@ typedef struct {
 extern "C" {
 #endif
 
-int  tipsy_init_xdr(tipsy_xdr_stream*, char const*, tipsy_xdr_dir);
+int  tipsy_init_xdr(tipsy_xdr_stream*, char const*, char const*, tipsy_xdr_dir);
 void tipsy_destroy_xdr(tipsy_xdr_stream*);
 
 int tipsy_read_header_xdr(tipsy_xdr_stream*, tipsy_header*);

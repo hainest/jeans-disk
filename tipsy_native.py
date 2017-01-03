@@ -68,13 +68,14 @@ class File():
     
 class streaming_writer():
     """A write-only Tipsy native file."""
-    def __init__(self, filename):
+    def __init__(self, filename, mode):
         self.lib = _load_tipsy()
 
         # fopen in tipsy_py_init_native fails without this here
         print()
         cfname = ctypes.c_char_p(bytes(filename, 'utf-8'))
-        self.lib.tipsy_py_init_writer_native(cfname)
+        cmode = ctypes.c_char_p(bytes(mode, 'utf-8'))
+        self.lib.tipsy_py_init_writer_native(cfname, cmode)
     
     def header(self, time, ngas, ndark, nstars):
         tmp = tipsy_c.header.from_external(time, ngas, ndark, nstars)
@@ -121,7 +122,7 @@ def _load_tipsy():
     lib.tipsy_py_init_reader_native.argtypes = [ctypes.c_char_p]
     
     lib.tipsy_py_init_writer_native.restype = decode_err
-    lib.tipsy_py_init_writer_native.argtypes = [ctypes.c_char_p]
+    lib.tipsy_py_init_writer_native.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
     
     lib.tipsy_py_destroy_native.restype = None
     lib.tipsy_py_destroy_native.argtypes = []

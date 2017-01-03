@@ -11,7 +11,7 @@ typedef enum { TIPSY_NATIVE_ENCODE, TIPSY_NATIVE_DECODE } tipsy_native_dir;
 extern "C" {
 #endif
 
-int  tipsy_init_native(tipsy_native_stream*, char const*, tipsy_native_dir);
+int  tipsy_init_native(tipsy_native_stream*, char const*, char const*,tipsy_native_dir);
 void tipsy_destroy_native(tipsy_native_stream*);
 
 int tipsy_read_header_native(tipsy_native_stream*, tipsy_header*);

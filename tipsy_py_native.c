@@ -5,10 +5,10 @@ static tipsy_native_stream stream;
 
 /****************************************************************************/
 int tipsy_py_init_reader_native(char const* filename) {
-	return tipsy_init_native(&stream, filename, TIPSY_NATIVE_DECODE);
+	return tipsy_init_native(&stream, filename, "rb", TIPSY_NATIVE_DECODE);
 }
-int tipsy_py_init_writer_native(char const* filename) {
-	return tipsy_init_native(&stream, filename, TIPSY_NATIVE_ENCODE);
+int tipsy_py_init_writer_native(char const* filename, const char* mode) {
+	return tipsy_init_native(&stream, filename, mode, TIPSY_NATIVE_ENCODE);
 }
 void tipsy_py_destroy_native() {
 	tipsy_destroy_native(&stream);

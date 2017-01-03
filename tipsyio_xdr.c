@@ -29,15 +29,15 @@ inline static int __tipsy_dark(XDR*, tipsy_dark_data*);
 inline static int __tipsy_star(XDR*, tipsy_star_data*);
 
 /*************************************************************************************************************/
-int tipsy_init_xdr(tipsy_xdr_stream* xdr_stream, char const* filename, tipsy_xdr_dir dir) {
+int tipsy_init_xdr(tipsy_xdr_stream* xdr_stream, char const* filename, char const* mode, tipsy_xdr_dir dir) {
 	switch (dir) {
 	case TIPSY_XDR_ENCODE:
-		xdr_stream->fd = fopen(filename, "wb");
+		xdr_stream->fd = fopen(filename, mode);
 		if (errno != 0) { return errno; }
 		xdrstdio_create(&(xdr_stream->xdr), xdr_stream->fd, XDR_ENCODE);
 		return 0;
 	case TIPSY_XDR_DECODE:
-		xdr_stream->fd = fopen(filename, "rb");
+		xdr_stream->fd = fopen(filename, mode);
 		if (errno != 0) { return errno; }
 		xdrstdio_create(&(xdr_stream->xdr), xdr_stream->fd, XDR_DECODE);
 		return 0;
