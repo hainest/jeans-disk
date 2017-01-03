@@ -6,6 +6,18 @@
 /* All XDR routines return one on success and zero, otherwise. */
 enum { TIPSY_XDR_FAILURE = 0, TIPSY_XDR_SUCCESS = 1 };
 
+/*
+ * We can't use sizeof(TYPE) because of compiler padding that
+ * doesn't get transferred to the XDR outputs
+ */
+enum{
+	TIPSY_XDR_HEADER_SIZE = 28,
+	TIPSY_XDR_HEADER_PAD = 4,
+	TIPSY_XDR_GAS_SIZE = 12 * sizeof(float),
+	TIPSY_XDR_DARK_SIZE = 9 * sizeof(float),
+	TIPSY_XDR_STAR_SIZE = 11 * sizeof(float)
+};
+
 inline static void reset_fd(FILE* fd, size_t offset) {
 	int i = fseek(fd, (long)offset, SEEK_SET);
 	(void)i;
@@ -48,23 +60,23 @@ int tipsy_read_header_xdr(tipsy_xdr_stream* xdr_stream, tipsy_header* h) {
 int tipsy_read_gas_xdr(tipsy_xdr_stream* xdr_stream, tipsy_header const* h, tipsy_gas_data* d) {
 	(void)h;
 	if (!xdr_stream->fd) { return TIPSY_READ_UNOPENED; }
-	const size_t offset = sizeof(tipsy_header);
-	reset_fd(xdr_stream->fd, offset - sizeof(float));
+	const size_t offset = TIPSY_XDR_HEADER_SIZE + TIPSY_XDR_HEADER_PAD;
+	reset_fd(xdr_stream->fd, offset);
 	const int status = __tipsy_gas(&(xdr_stream->xdr), d);
 	return (status == TIPSY_XDR_FAILURE) ? TIPSY_BAD_XDR_READ : 0;
 }
 int tipsy_read_dark_xdr(tipsy_xdr_stream* xdr_stream, tipsy_header const* h, tipsy_dark_data* d) {
 	if (!xdr_stream->fd) { return TIPSY_READ_UNOPENED; }
-	const size_t offset = sizeof(tipsy_header) + h->ngas * sizeof(tipsy_gas_particle);
-	reset_fd(xdr_stream->fd, offset - sizeof(float));
+	const size_t offset = TIPSY_XDR_HEADER_SIZE + TIPSY_XDR_HEADER_PAD + h->ngas * TIPSY_XDR_GAS_SIZE;
+	reset_fd(xdr_stream->fd, offset);
 	const int status = __tipsy_dark(&(xdr_stream->xdr), d);
 	return (status == TIPSY_XDR_FAILURE) ? TIPSY_BAD_XDR_READ : 0;
 }
 int tipsy_read_star_xdr(tipsy_xdr_stream* xdr_stream, tipsy_header const* h, tipsy_star_data* d) {
 	if (!xdr_stream->fd) { return TIPSY_READ_UNOPENED; }
-	const size_t offset = sizeof(tipsy_header) + h->ngas * sizeof(tipsy_gas_particle) +
-			      h->ndark * sizeof(tipsy_dark_particle);
-	reset_fd(xdr_stream->fd, offset - sizeof(float));
+	const size_t offset = TIPSY_XDR_HEADER_SIZE + TIPSY_XDR_HEADER_PAD + h->ngas * TIPSY_XDR_GAS_SIZE +
+			      h->ndark * TIPSY_XDR_DARK_SIZE;
+	reset_fd(xdr_stream->fd, offset);
 	const int status = __tipsy_star(&(xdr_stream->xdr), d);
 	return (status == TIPSY_XDR_FAILURE) ? TIPSY_BAD_XDR_READ : 0;
 }
@@ -94,12 +106,14 @@ int tipsy_write_star_xdr(tipsy_xdr_stream* xdr_stream, tipsy_star_data const* d)
 /*************************************************************************************************************/
 static int __tipsy_header(XDR* xdr, tipsy_header* h) {
 	int status = TIPSY_XDR_SUCCESS;
+	int pad = 0;
 	status &= xdr_double(xdr, &(h->time));
 	status &= xdr_u_int(xdr, &(h->nbodies));
 	status &= xdr_int(xdr, &(h->ndim));
 	status &= xdr_u_int(xdr, &(h->ngas));
 	status &= xdr_u_int(xdr, &(h->ndark));
 	status &= xdr_u_int(xdr, &(h->nstar));
+	status &= xdr_int(xdr, &pad);
 	return status;
 }
 
