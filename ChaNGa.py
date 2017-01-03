@@ -83,17 +83,15 @@ def convert_parameter_file(gadget_params, args, do_gas):
 
     # convert cm to kpc
     unitlength = float(gadget_params['UnitLength_in_cm']) * u.cm
-    dKpcUnit = unitlength.to(u.kpc) / u.kpc
-    changa_params['dKpcUnit'] = dKpcUnit
+    changa_params['dKpcUnit'] = float(unitlength.to(u.kpc) / u.kpc)
         
     # convert mass to solar masses
     unitvelocity = float(gadget_params['UnitVelocity_in_cm_per_s']) * u.cm / u.s
     unittime = unitlength / unitvelocity
-    m = (dKpcUnit * u.kpc).to(u.m) ** 3 / unittime ** 2 / G_u
-    dMsolUnit = m.to(u.Msun) / u.Msun
+    dMsolUnit = (unitlength.to(u.m) ** 3 / unittime ** 2 / G_u).to(u.Msun)
     unitmass = float(gadget_params['UnitMass_in_g']) * u.g
-    mass_convert_factor = (dMsolUnit * u.Msun) / unitmass.to(u.Msun)
-    changa_params['dMsolUnit'] = dMsolUnit
+    mass_convert_factor = dMsolUnit / unitmass.to(u.Msun)
+    changa_params['dMsolUnit'] = float(dMsolUnit / u.Msun)
     
     if do_gas:
         changa_params['bDoGas'] = int(do_gas)
@@ -109,9 +107,9 @@ def convert_parameter_file(gadget_params, args, do_gas):
         if int(changa_params['bStarForm']) == 1:
             if not args.generations:
                 raise ValueError('Star formation enabled, but --generations not given')
-            else:
-                # Form *at least* args.generations many stars
-                changa_params['dMinGasMass'] = dMsolUnit / (float(args.generations) + 1.0)
+
+            # Form *at least* args.generations many stars
+            changa_params['dMinGasMass'] = float(dMsolUnit / u.Msun) / (float(args.generations) + 1.0)
             
             # ChaNGa requires dStarEff < 1.0 (this is likely a bug)
             if args.generations == 1:
