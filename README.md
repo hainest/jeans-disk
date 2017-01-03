@@ -43,3 +43,4 @@ Simply run the included Makefile to build the C interface.
 - ChaNGa has no support for stellar winds
 - Blackhole physics is not converted (ChaNGa does not support BHs)
 - Only basic cosmological parameters are converted
+- Assumes all inputs are in single precision
