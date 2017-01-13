@@ -9,6 +9,7 @@ __pycache__
 *.params
 *.sbatch
 *.pickle
+stuff.*
 
 
 # Eclipse folders
