@@ -25,8 +25,10 @@ gadget_trans_table = {
     'ErrTolIntAccuracy'     : 'dEta',
     'MaxSizeTimestep'       : 'dDelta',
     'ErrTolTheta'           : 'dTheta',
-    'UnitLength_in_cm'      : 'dKpcUnit',
-    'UnitMass_in_g'         : 'dMsolUnit'
+    'DesNumNgb'             : 'nSmooth',
+    'MinGasHsmlFractional'  : 'dhMinOverSoft',
+    'ArtBulkViscConst'      : 'dConstAlpha',
+    'CourantFac'            : 'dEtaCourant'
 }
 
 def get_input_file(file_name):
@@ -80,6 +82,9 @@ def convert_parameter_file(gadget_params, args, do_gas):
     
     # disable density outputs by default
     changa_params['bDoDensity'] = 0
+    
+    # gadget courant factor is half of normal
+    changa_params['dEtaCourant'] = 2.0 * float(changa_params['dEtaCourant'])
 
     # convert cm to kpc
     unitlength = float(gadget_params['UnitLength_in_cm']) * u.cm
@@ -88,44 +93,32 @@ def convert_parameter_file(gadget_params, args, do_gas):
     # convert mass to solar masses
     unitvelocity = float(gadget_params['UnitVelocity_in_cm_per_s']) * u.cm / u.s
     unittime = unitlength / unitvelocity
-    dMsolUnit = (unitlength.to(u.m) ** 3 / unittime ** 2 / G_u).to(u.Msun)
-    unitmass = float(gadget_params['UnitMass_in_g']) * u.g
-    mass_convert_factor = dMsolUnit / unitmass.to(u.Msun)
-    changa_params['dMsolUnit'] = float(dMsolUnit / u.Msun)
+    G_factor = (unitlength.to(u.m) ** 3 / unittime ** 2 / G_u).to(u.Msun)
+    unitmass = float((float(gadget_params['UnitMass_in_g']) * u.g).to(u.Msun) / u.Msun)
+    changa_params['dMsolUnit'] = unitmass / float(G_factor / u.Msun)
     
     if do_gas:
-        changa_params['bDoGas'] = int(do_gas)
+        changa_params['bDoGas'] = 1
         changa_params['bSphStep'] = 1
         changa_params['bConcurrentSph'] = 1
-
-        changa_params['nSmooth'] = gadget_params['DesNumNgb']
-        changa_params['dhMinOverSoft'] = gadget_params['MinGasHsmlFractional']
-
-        # gadget courant factor is half of normal
-        changa_params['dEtaCourant'] = 2.0 * float(gadget_params['CourantFac'])
-        
+       
         if int(changa_params['bStarForm']) == 1:
-            if not args.generations:
+            if args.generations is None:
                 raise ValueError('Star formation enabled, but --generations not given')
-
             # Form *at least* args.generations many stars
-            changa_params['dMinGasMass'] = float(dMsolUnit / u.Msun) / (float(args.generations) + 1.0)
-            
+            changa_params['dMinGasMass'] = changa_params['dMsolUnit'] / (float(args.generations) + 1.0)
+        
             # ChaNGa requires dStarEff < 1.0 (this is likely a bug)
             if args.generations == 1:
                 changa_params['dStarEff'] = 0.99
             else:
                 changa_params['dStarEff'] = 1.0 / float(args.generations)
-        
-        if args.viscosity:
-            changa_params['bBulkViscosity'] = 1
-            changa_params['dConstAlpha'] = gadget_params['ArtBulkViscConst']
-            changa_params['dConstBeta'] = gadget_params['ArtBulkViscConst']
-            print('Beta constant of artificial viscosity assumed to be the same as alpha constant')
-        else:
-            changa_params['bBulkViscosity'] = 0
+            
+        changa_params['bBulkViscosity'] = int(args.viscosity)
+        changa_params['dConstBeta'] = gadget_params['ArtBulkViscConst']
+        print('Beta constant of artificial viscosity assumed to be the same as alpha constant')
     
-    return changa_params, mass_convert_factor
+    return changa_params
 
 all_parameters = """
 #----- general_gravity -----

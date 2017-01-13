@@ -41,17 +41,23 @@ def load_snapshot(filename):
         disk = pickle.load(f)
         return disk
 
-def process_changa_snapshot(input_file, output_file, limits, nbins=512):
+def process_changa_snapshot(input_file, output_file, limits, nbins=512, is_xdr=True):
     pickle_file = '{0:s}.pickle'.format(output_file)
     if os.path.isfile(pickle_file):
         return load_snapshot(pickle_file)
 
-    mass_factor = 1e10 / 2.3245560928778488e-05
+    from astropy import units as u
+    from astropy.constants import G as G_u
+    unitlength = 1.0 * u.kpc
+    unitvelocity = 1.0 * u.km / u.s
+    unittime = (unitlength / unitvelocity).to(u.s)
+    mass_factor = float((unitlength.to(u.m) ** 3 / unittime ** 2 / G_u).to(u.Msun) / u.Msun)
+    
     disk = processed_data()
     
-    with tipsy.File(input_file) as snap:
+    with tipsy.File(input_file, is_xdr=is_xdr) as snap:
         disk.time = snap.header.time
-
+        
         slab_mask = select_slab2D(snap.stars.pos, *limits)
         x, y = snap.stars.pos[:, 0][slab_mask], snap.stars.pos[:, 1][slab_mask]
         mass, disk.x_grid, disk.y_grid = bin2d(x, y, nbins, weights=snap.stars.mass[slab_mask])
@@ -76,21 +82,22 @@ def process_gadget_snapshot(input_file, output_file, limits, nbins=512):
             disk = pickle.load(f)
             return disk
 
+    mass_factor = 1e10
     disk = processed_data()
     
     with gadget.File(input_file) as snap:
         disk.time = snap.header.time
-    
+        
         slab_mask = select_slab2D(snap.disk.positions, *limits)
         x, y = snap.disk.positions[:, 0][slab_mask], snap.disk.positions[:, 1][slab_mask]
         mass, disk.x_grid, disk.y_grid = bin2d(x, y, nbins, weights=snap.disk.mass[slab_mask])
-        mass *= 1e10
+        mass *= mass_factor
         bin_area = 1.0e6 * (2.0 * limits[0]) * (2.0 * limits[1]) / (1.0 * nbins * nbins)  # pc^2
         disk.stellar_smd = mass / bin_area
         
         if snap.gas:
             mass = bin2d(x, y, nbins, weights=snap.gas.mass[slab_mask])
-            mass *= 1e10
+            mass *= mass_factor
             disk.gas_smd = mass / bin_area
     
     with open(pickle_file, 'wb') as f:

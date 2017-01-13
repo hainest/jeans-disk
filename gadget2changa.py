@@ -70,7 +70,7 @@ except Exception as e:
     exit()
 
 gadget_file = gadget.File(args.gadget_file)
-changa_params, mass_scale = ChaNGa.convert_parameter_file(gadget_params, args, gadget_file.gas is not None)
+changa_params = ChaNGa.convert_parameter_file(gadget_params, args, gadget_file.gas is not None)
 basename = args.out_dir + '/' + ChaNGa.get_input_file(args.gadget_file) + '.tipsy'
 
 # Output the parameter file
@@ -105,7 +105,7 @@ with tipsy.streaming_writer(basename) as file:
         gas = gadget_file.gas
         ngas += gas.size
         gas_temp = convert_U_to_temperature(gadget_params, gadget_file, hubble)
-        gas.mass *= mass_scale
+        gas.mass *= changa_params['dMsolUnit']
         gas.velocities *= velocity_scale
         metals = gas.metals if gas.metals is not None else np.zeros(gas.size)
         pot = gas.potential if gas.potential is not None else np.zeros(gas.size)
@@ -114,7 +114,7 @@ with tipsy.streaming_writer(basename) as file:
     if gadget_file.halo is not None:
         halo = gadget_file.halo
         ndark += halo.size
-        halo.mass *= mass_scale
+        halo.mass *= changa_params['dMsolUnit']
         halo.velocities *= velocity_scale
         pot = halo.potential if halo.potential is not None else np.zeros(halo.size)
         file.darkmatter(halo.mass, halo.positions, halo.velocities, gadget_params['SofteningHalo'], pot, halo.size)
@@ -125,15 +125,15 @@ with tipsy.streaming_writer(basename) as file:
         if gadget_file.disk is not None:
             disk = gadget_file.disk
             ndark += disk.size
-            disk.mass *= mass_scale
+            disk.mass *= changa_params['dMsolUnit']
             disk.velocities *= velocity_scale
             pot = disk.potential if disk.potential is not None else np.zeros(disk.size)
-            file.darkmatter(disk.mass, disk.positions, disk.velocities, gadget_params['SofteningDisk'], disk.potential, disk.size)
+            file.darkmatter(disk.mass, disk.positions, disk.velocities, gadget_params['SofteningDisk'], pot, disk.size)
         
         if gadget_file.bulge is not None:
             bulge = gadget_file.bulge
             ndark += bulge.size
-            bulge.mass *= mass_scale
+            bulge.mass *= changa_params['dMsolUnit']
             bulge.velocities *= velocity_scale
             pot = bulge.potential if bulge.potential is not None else np.zeros(bulge.size)
             file.darkmatter(bulge.mass, bulge.positions, bulge.velocities, gadget_params['SofteningBulge'], pot, bulge.size)
@@ -142,7 +142,7 @@ with tipsy.streaming_writer(basename) as file:
     if gadget_file.boundary is not None:
         boundary = gadget_file.boundary
         ndark += boundary.size
-        boundary.mass *= mass_scale
+        boundary.mass *= changa_params['dMsolUnit']
         boundary.velocities *= velocity_scale
         eps = gadget_params['SofteningBndry'] if args.preserve_boundary_softening else gadget_params['SofteningHalo']
         pot = boundary.potential if boundary.potential is not None else np.zeros(boundary.size)
@@ -152,18 +152,19 @@ with tipsy.streaming_writer(basename) as file:
         if gadget_file.disk is not None:
             disk = gadget_file.disk
             nstar += disk.size
-            disk.mass *= mass_scale
+            disk.mass *= changa_params['dMsolUnit']
             disk.velocities *= velocity_scale
             metals = np.zeros(disk.size)
             tform = np.zeros(disk.size)
+            pot = disk.potential if disk.potential is not None else np.zeros(disk.size)
             file.stars(disk.mass, disk.positions, disk.velocities, metals, tform, gadget_params['SofteningDisk'],
-                       disk.potential, disk.size)
+                       pot, disk.size)
             metals = tform = None
         
         if gadget_file.bulge is not None:
             bulge = gadget_file.bulge
             nstar += bulge.size
-            bulge.mass *= mass_scale
+            bulge.mass *= changa_params['dMsolUnit']
             bulge.velocities *= velocity_scale
             metals = bulge.metals if bulge.metals is not None else np.zeros(bulge.size)
             tform = bulge.t_form if bulge.t_form is not None else np.zeros(bulge.size)
@@ -174,7 +175,7 @@ with tipsy.streaming_writer(basename) as file:
     if gadget_file.stars is not None:
         star = gadget_file.stars
         nstar += star.size
-        star.mass *= mass_scale
+        star.mass *= changa_params['dMsolUnit']
         star.velocities *= velocity_scale
         metals = star.metals if star.metals is not None else np.zeros(star.size)
         tform = star.t_form if star.t_form is not None else np.zeros(star.size)
