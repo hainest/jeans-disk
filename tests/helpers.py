@@ -42,9 +42,8 @@ def load_snapshot(filename):
         return disk
 
 def process_changa_snapshot(input_file, output_file, limits, nbins=512, is_xdr=True):
-    pickle_file = '{0:s}.pickle'.format(output_file)
-    if os.path.isfile(pickle_file):
-        return load_snapshot(pickle_file)
+    if os.path.isfile(output_file):
+        return load_snapshot(output_file)
 
     from astropy import units as u
     from astropy.constants import G as G_u
@@ -66,22 +65,21 @@ def process_changa_snapshot(input_file, output_file, limits, nbins=512, is_xdr=T
         disk.stellar_smd = mass / bin_area
         
         if snap.gas:
-            mass = bin2d(x, y, nbins, weights=snap.gas.mass[slab_mask])
+            slab_mask = select_slab2D(snap.gas.pos, *limits)
+            x, y = snap.gas.pos[:, 0][slab_mask], snap.gas.pos[:, 1][slab_mask]
+            mass = bin2d(x, y, nbins, weights=snap.gas.mass[slab_mask])[0]
             mass *= mass_factor
             disk.gas_smd = mass / bin_area
     
-    with open(pickle_file, 'wb') as f:
+    with open(output_file, 'wb') as f:
         pickle.dump(disk, f, pickle.HIGHEST_PROTOCOL)
     
     return disk
 
 def process_gadget_snapshot(input_file, output_file, limits, nbins=512):
-    pickle_file = '{0:s}.pickle'.format(output_file)
-    if os.path.isfile(pickle_file):
-        with open(pickle_file, 'rb') as f:
-            disk = pickle.load(f)
-            return disk
-
+    if os.path.isfile(output_file):
+        return load_snapshot(output_file)
+    
     mass_factor = 1e10
     disk = processed_data()
     
@@ -96,11 +94,13 @@ def process_gadget_snapshot(input_file, output_file, limits, nbins=512):
         disk.stellar_smd = mass / bin_area
         
         if snap.gas:
-            mass = bin2d(x, y, nbins, weights=snap.gas.mass[slab_mask])
+            slab_mask = select_slab2D(snap.gas.positions, *limits)
+            x, y = snap.gas.positions[:, 0][slab_mask], snap.gas.positions[:, 1][slab_mask]
+            mass = bin2d(x, y, nbins, weights=snap.gas.mass[slab_mask])[0]
             mass *= mass_factor
             disk.gas_smd = mass / bin_area
     
-    with open(pickle_file, 'wb') as f:
+    with open(output_file, 'wb') as f:
         pickle.dump(disk, f, pickle.HIGHEST_PROTOCOL)
     
     return disk
