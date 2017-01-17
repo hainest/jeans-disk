@@ -15,14 +15,14 @@ import astropy.constants as apc
 import math
 import numpy as np
 
-def convert_U_to_temperature(gadget_params, gadget_file, hubble):
-    # TODO: Check these units wrt the mass conversion between GADGET and ChaNGa
+def convert_U_to_temperature(gadget_params, gadget_file):
     units = {}
-    units['Length_in_cm'] = float(gadget_params['UnitLength_in_cm']) / hubble
-    units['Mass_in_g'] = float(gadget_params['UnitMass_in_g']) / hubble
-    units['Velocity_in_cm_per_s'] = float(gadget_params['UnitVelocity_in_cm_per_s'])
-    units['Time_in_s'] = units['Length_in_cm'] / units['Velocity_in_cm_per_s']
-    units['Energy_in_cgs'] = units['Mass_in_g'] * units['Length_in_cm'] ** 2 / units['Time_in_s'] ** 2
+    units['length'] = float(gadget_params['UnitLength_in_cm']) * apu.cm
+    units['mass'] = float(gadget_params['UnitMass_in_g']) * apu.g
+    units['velocity'] = float(gadget_params['UnitVelocity_in_cm_per_s']) * apu.cm / apu.s
+    units['time'] = (units['length'] / units['velocity']).to(apu.s)
+    units['density'] = units['mass'] / units['length'] ** 3.0
+    units['pressure'] = units['mass'] / units['length'] / units['time'] ** 2.0
     
     constants = {
         'boltzmann'     : apc.k_B.cgs.value,
@@ -31,25 +31,28 @@ def convert_U_to_temperature(gadget_params, gadget_file, hubble):
         'h_massfrac'    : 0.76
     }
     
-    # Convert temperature to Kelvin
-    print('Converting internal energy to temperature assuming a neutral hydrogen-only gamma=5/3 gas and non-traditional SPH')
-    
-    # See GADGET3/density.c:1426  for details on these calculations
+    # Neutral gas
     mean_weight = 4.0 / (1.0 + 3.0 * constants['h_massfrac'])
     
+    # Fully ionized gas
+    if float(gadget_params['InitGasTemp']) > 1e4:
+        mean_weight = 4.0 / (8.0 - 5.0 * (1.0 - constants['h_massfrac']))
+
+    # Gas with metals
     if gadget_file.gas.metals is not None and gadget_file.gas.electron_density is not None:
         X = gadget_file.gas.metals / gadget_file.gas.mass
         mask = X > 0.0
         Y = np.zeros(X.shape)
         Y[mask] = (1.0 - X[mask]) / (4.0 * X[mask])
         mean_weight = (1.0 + 4.0 * Y) / (1.0 + Y + gadget_file.gas.electron_density)
+
+    p = float(units['pressure'] / (apu.g / (apu.cm * apu.s ** 2.0)))
+    d = float(units['density'] / (apu.g / apu.cm ** 3.0))
+    u = gadget_file.gas.internal_energy * p / d
     
-    gas_temp = constants['gamma_minus1'] / constants['boltzmann'] * gadget_file.gas.internal_energy / gadget_file.gas.mass
-    gas_temp *= constants['protonmass'] * mean_weight * units['Energy_in_cgs'] / units['Mass_in_g']
-    gas_temp[gas_temp < float(gadget_params['MinGasTemp'])] = float(gadget_params['MinGasTemp'])
-
-    return gas_temp
-
+    temp = constants['gamma_minus1'] / constants['boltzmann'] * u * constants['protonmass'] * mean_weight
+    temp[temp < float(gadget_params['MinGasTemp'])] = float(gadget_params['MinGasTemp'])
+    return temp
 #-----------------------------------------------------------------------------
 
 parser = argparse.ArgumentParser(description='Convert GADGET2 files to ChaNGa files')
@@ -89,12 +92,6 @@ is_cosmological = int(gadget_params['ComovingIntegrationOn']) == 1
 # Gadget units have an extra sqrt(a) in the internal velocities
 velocity_scale = math.sqrt(1.0 + float(gadget_file.header.redshift))
 
-hubble = 1.0
-if is_cosmological:
-    hubble = float(gadget_params['HubbleParam'])
-    if hubble == 0.0:
-        hubble = 1.0
-
 with tipsy.streaming_writer(basename) as file:
     ngas = ndark = nstar = 0
     
@@ -104,12 +101,12 @@ with tipsy.streaming_writer(basename) as file:
     if gadget_file.gas is not None:
         gas = gadget_file.gas
         ngas += gas.size
-        gas_temp = convert_U_to_temperature(gadget_params, gadget_file, hubble)
+        temp = convert_U_to_temperature(gadget_params, gadget_file)
         gas.mass *= changa_params['dMsolUnit']
         gas.velocities *= velocity_scale
         metals = gas.metals if gas.metals is not None else np.zeros(gas.size)
         pot = gas.potential if gas.potential is not None else np.zeros(gas.size)
-        file.gas(gas.mass, gas.positions, gas.velocities, gas.density, gas_temp, gas.hsml, metals, pot, gas.size)
+        file.gas(gas.mass, gas.positions, gas.velocities, gas.density, temp, gas.hsml, metals, pot, gas.size)
     
     if gadget_file.halo is not None:
         halo = gadget_file.halo
