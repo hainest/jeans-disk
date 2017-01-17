@@ -32,7 +32,7 @@ $(TEST_EXEC): $(TEST_OBJS) tipsyio_xdr.o tipsyio_err.o
 
 .PHONY: dist
 dist:
-	@ tar -zc --exclude='*.hdf5' --exclude='*.tipsy' -f g2c.tar.gz $(SRCS) *.h *.py Makefile tests
+	@ tar -zc --exclude='*.hdf5' --exclude='*.tipsy' --exclude='*.pickle' --exclude='*.png' -f g2c.tar.gz $(SRCS) *.h *.py Makefile
 
 .PHONY: clean
 clean:
