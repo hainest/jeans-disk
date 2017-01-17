@@ -101,6 +101,9 @@ def convert_parameter_file(gadget_params, args, do_gas):
         changa_params['bDoGas'] = 1
         changa_params['bSphStep'] = 1
         changa_params['bConcurrentSph'] = 1
+        
+        if int(changa_params['bGasCooling']) == 1 and int(changa_params['bComove']) == 0:
+            changa_params['bUV'] = 0
        
         if int(changa_params['bStarForm']) == 1:
             if args.generations is None:
@@ -305,7 +308,7 @@ all_parameters = """
 #   nCacheDepth                              Cache Line Depth (default: 4)
 #   nCacheSize                               Size of cache (IGNORED)
 #   nChunks                                  Chunks per TreePiece (default: 1)
-#   nDomainDecompose                         Kind of domain decomposition of particles
+#   nDomainDecompose                         Kind of domain decomposition of particles (SFC+Morton=0,OctTree=1,ORB=2,SFC+Peano=3,SFC+Peano3D=4,SFC+Peano2D=5,ORBSpace=6)
 #   nPartPerChare                            Average number of particles per TreePiece
 #   nTreePieces                              Number of TreePieces (default: 8*procs)
 #   nYield                                   Yield Period (default: 5)
