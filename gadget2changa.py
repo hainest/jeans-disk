@@ -10,50 +10,8 @@ import gadget
 import ChaNGa
 import tipsy
 import argparse
-import astropy.units as apu
-import astropy.constants as apc
 import math
 import numpy as np
-
-def convert_U_to_temperature(gadget_params, gadget_file):
-    units = {}
-    units['length'] = float(gadget_params['UnitLength_in_cm']) * apu.cm
-    units['mass'] = float(gadget_params['UnitMass_in_g']) * apu.g
-    units['velocity'] = float(gadget_params['UnitVelocity_in_cm_per_s']) * apu.cm / apu.s
-    units['time'] = (units['length'] / units['velocity']).to(apu.s)
-    units['density'] = units['mass'] / units['length'] ** 3.0
-    units['pressure'] = units['mass'] / units['length'] / units['time'] ** 2.0
-    
-    constants = {
-        'boltzmann'     : apc.k_B.cgs.value,
-        'protonmass'    : apc.m_p.cgs.value,
-        'gamma_minus1'  : (5.0 / 3.0) - 1.0,
-        'h_massfrac'    : 0.76
-    }
-    
-    # Neutral gas
-    mean_weight = 4.0 / (1.0 + 3.0 * constants['h_massfrac'])
-    
-    # Fully ionized gas
-    if float(gadget_params['InitGasTemp']) > 1e4:
-        mean_weight = 4.0 / (8.0 - 5.0 * (1.0 - constants['h_massfrac']))
-
-    # Gas with metals
-    if gadget_file.gas.metals is not None and gadget_file.gas.electron_density is not None:
-        X = gadget_file.gas.metals / gadget_file.gas.mass
-        mask = X > 0.0
-        Y = np.zeros(X.shape)
-        Y[mask] = (1.0 - X[mask]) / (4.0 * X[mask])
-        mean_weight = (1.0 + 4.0 * Y) / (1.0 + Y + gadget_file.gas.electron_density)
-
-    p = float(units['pressure'] / (apu.g / (apu.cm * apu.s ** 2.0)))
-    d = float(units['density'] / (apu.g / apu.cm ** 3.0))
-    u = gadget_file.gas.internal_energy * p / d
-    
-    temp = constants['gamma_minus1'] / constants['boltzmann'] * u * constants['protonmass'] * mean_weight
-    temp[temp < float(gadget_params['MinGasTemp'])] = float(gadget_params['MinGasTemp'])
-    return temp
-#-----------------------------------------------------------------------------
 
 parser = argparse.ArgumentParser(description='Convert GADGET2 files to ChaNGa files')
 parser.add_argument('gadget_file', metavar='GADGET', help='GADGET2 HDF5 file to convert')
@@ -101,7 +59,7 @@ with tipsy.streaming_writer(basename) as file:
     if gadget_file.gas is not None:
         gas = gadget_file.gas
         ngas += gas.size
-        temp = convert_U_to_temperature(gadget_params, gadget_file)
+        temp = gadget.convert_U_to_temperature(gadget_file, gadget_params)
         gas.mass *= changa_params['dMsolUnit']
         gas.velocities *= velocity_scale
         metals = gas.metals if gas.metals is not None else np.zeros(gas.size)
