@@ -10,7 +10,7 @@ __pycache__
 *.sbatch
 *.pickle
 stuff.*
-
+*.bak
 
 # Eclipse folders
 .project
