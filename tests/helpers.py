@@ -35,11 +35,34 @@ class processed_data:
         self.y_grid = None
         self.stellar_smd = None
         self.gas_smd = None
+        self.temp_grid = None
 
 def load_snapshot(filename):
     with open(filename, 'rb') as f:
         disk = pickle.load(f)
         return disk
+
+def _process_snapshot(stars, gas, mass_factor, nbins, limits):
+    disk = processed_data()
+   
+    slab_mask = select_slab2D(stars.pos, *limits)
+    x, y = stars.pos[:, 0][slab_mask], stars.pos[:, 1][slab_mask]
+    mass, disk.x_grid, disk.y_grid = bin2d(x, y, nbins, weights=stars.mass[slab_mask])
+    mass *= mass_factor
+    bin_area = 1.0e6 * (2.0 * limits[0]) * (2.0 * limits[1]) / (1.0 * nbins * nbins)  # pc^2
+    disk.stellar_smd = mass / bin_area
+    
+    if gas:
+        slab_mask = select_slab2D(gas.pos, *limits)
+        x, y = gas.pos[:, 0][slab_mask], gas.pos[:, 1][slab_mask]
+        mass = bin2d(x, y, nbins, weights=gas.mass[slab_mask])[0]
+        mass *= mass_factor
+        disk.gas_smd = mass / bin_area
+        
+        temp = bin2d(x, y, nbins, weights=gas.temp[slab_mask])[0]
+        disk.temp_grid = temp / bin_area
+    
+    return disk
 
 def process_changa_snapshot(input_file, output_file, limits, nbins=512, is_xdr=True):
     if os.path.isfile(output_file):
@@ -51,25 +74,10 @@ def process_changa_snapshot(input_file, output_file, limits, nbins=512, is_xdr=T
     unitvelocity = 1.0 * u.km / u.s
     unittime = (unitlength / unitvelocity).to(u.s)
     mass_factor = float((unitlength.to(u.m) ** 3 / unittime ** 2 / G_u).to(u.Msun) / u.Msun)
-    
-    disk = processed_data()
-    
+
     with tipsy.File(input_file, is_xdr=is_xdr) as snap:
+        disk = _process_snapshot(snap.stars, snap.gas, mass_factor, nbins, limits)
         disk.time = snap.header.time
-        
-        slab_mask = select_slab2D(snap.stars.pos, *limits)
-        x, y = snap.stars.pos[:, 0][slab_mask], snap.stars.pos[:, 1][slab_mask]
-        mass, disk.x_grid, disk.y_grid = bin2d(x, y, nbins, weights=snap.stars.mass[slab_mask])
-        mass *= mass_factor
-        bin_area = 1.0e6 * (2.0 * limits[0]) * (2.0 * limits[1]) / (1.0 * nbins * nbins)  # pc^2
-        disk.stellar_smd = mass / bin_area
-        
-        if snap.gas:
-            slab_mask = select_slab2D(snap.gas.pos, *limits)
-            x, y = snap.gas.pos[:, 0][slab_mask], snap.gas.pos[:, 1][slab_mask]
-            mass = bin2d(x, y, nbins, weights=snap.gas.mass[slab_mask])[0]
-            mass *= mass_factor
-            disk.gas_smd = mass / bin_area
     
     with open(output_file, 'wb') as f:
         pickle.dump(disk, f, pickle.HIGHEST_PROTOCOL)
@@ -81,24 +89,10 @@ def process_gadget_snapshot(input_file, output_file, limits, nbins=512):
         return load_snapshot(output_file)
     
     mass_factor = 1e10
-    disk = processed_data()
     
     with gadget.File(input_file) as snap:
+        disk = _process_snapshot(snap.disk, snap.gas, mass_factor, nbins, limits)
         disk.time = snap.header.time
-        
-        slab_mask = select_slab2D(snap.disk.positions, *limits)
-        x, y = snap.disk.positions[:, 0][slab_mask], snap.disk.positions[:, 1][slab_mask]
-        mass, disk.x_grid, disk.y_grid = bin2d(x, y, nbins, weights=snap.disk.mass[slab_mask])
-        mass *= mass_factor
-        bin_area = 1.0e6 * (2.0 * limits[0]) * (2.0 * limits[1]) / (1.0 * nbins * nbins)  # pc^2
-        disk.stellar_smd = mass / bin_area
-        
-        if snap.gas:
-            slab_mask = select_slab2D(snap.gas.positions, *limits)
-            x, y = snap.gas.positions[:, 0][slab_mask], snap.gas.positions[:, 1][slab_mask]
-            mass = bin2d(x, y, nbins, weights=snap.gas.mass[slab_mask])[0]
-            mass *= mass_factor
-            disk.gas_smd = mass / bin_area
     
     with open(output_file, 'wb') as f:
         pickle.dump(disk, f, pickle.HIGHEST_PROTOCOL)
