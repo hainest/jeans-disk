@@ -41,8 +41,8 @@ def convert_parameter_file(gadget_params, args, do_gas):
     
     gadget_file, output_directory = args.gadget_file, args.out_dir
     
-    if not isinstance(gadget_params, gadget.Parameter_file):
-        raise TypeError("parameter file is not a 'gadget.Parameter_file'")
+    if not isinstance(gadget_params, gadget.parameter_file):
+        raise TypeError("parameter file is not a 'gadget.parameter_file'")
     
     # Translate GADGET parameters into ChaNGa parameters
     changa_params = {}

@@ -24,7 +24,7 @@ parser.add_argument('--viscosity', action='store_true', help='Use artificial bul
 args = parser.parse_args()
 
 try:
-    gadget_params = gadget.Parameter_file(args.param_file)
+    gadget_params = gadget.parameter_file(args.param_file)
 except Exception as e:
     print('\nERROR: {0:s}\n\n'.format(str(e)))
     parser.print_help()
