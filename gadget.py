@@ -148,7 +148,7 @@ class Header():
         self.flag_metals = int(attrs['Flag_Metals'])
         self.flag_feedback = int(attrs['Flag_Feedback'])
         self.flag_doubleprecision = int(attrs['Flag_DoublePrecision'])
-        self.flag_ic_info = int(attrs['Flag_IC_Info'])
+        self.flag_ic_info = int(attrs['Flag_IC_Info']) if 'Flag_IC_Info' in attrs else 0
     
     def __str__(self):
         return '\n'.join(['{0:s} => {1:s}'.format(x, str(getattr(self, x))) for x in self.__dict__])
