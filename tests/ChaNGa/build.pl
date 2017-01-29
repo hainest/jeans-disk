@@ -75,7 +75,12 @@ if ($args{'changa'}) {
 	copy('src/changa/charmrun', 'gas/') or die;
 	chmod(0755, 'gas/ChaNGa', 'gas/charmrun');
 	
-	execute("cd src/changa; make clean; ./configure --enable-cooling=cosmo; make -j$args{'njobs'}");
+	execute("
+        cd src/changa
+        make clean
+        ./configure --enable-cooling=cosmo $cuda $float $hex $simd
+        make -j$args{'njobs'}
+    ");
 	copy('src/changa/ChaNGa', 'gas+sfr/') or die;
 	copy('src/changa/charmrun', 'gas+sfr/') or die;
 	chmod(0755, 'gas+sfr/ChaNGa', 'gas+sfr/charmrun');
