@@ -23,6 +23,8 @@ parser.add_argument('--generations', type=int, help='Number of generations of st
 parser.add_argument('--viscosity', action='store_true', help='Use artificial bulk viscosity')
 args = parser.parse_args()
 
+print("Converting {0:s}".format(args.gadget_file))
+
 try:
     gadget_params = gadget.parameter_file(args.param_file)
 except Exception as e:
