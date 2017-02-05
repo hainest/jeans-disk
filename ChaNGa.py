@@ -9,26 +9,13 @@ gadget_trans_table = {
     'InitCondFile'          : 'achInFile',
     'SnapshotFileBase'      : 'achOutName',
     'TimeLimitCPU'          : 'iWallRunTime',
-    'ComovingIntegrationOn' : 'bComove',
-    'CoolingOn'             : 'bGasCooling',
-    'StarformationOn'       : 'bStarForm',
     'TimeBegin'             : 'iStartStep',
     'TimeMax'               : 'nSteps',
-    'Omega0'                : 'dOmega0',
-    'OmegaLambda'           : 'dLambda',
-    'OmegaBaryon'           : 'dOmegab',
-    'HubbleParam'           : 'dHubble0',
-    'BoxSize'               : 'dPeriod',
-    'PeriodicBoundariesOn'  : 'bPeriodic',
     'TimeBetSnapshot'       : 'iOutInterval',
     'TimeBetStatistics'     : 'iLogInterval',
     'ErrTolIntAccuracy'     : 'dEta',
     'MaxSizeTimestep'       : 'dDelta',
-    'ErrTolTheta'           : 'dTheta',
-    'DesNumNgb'             : 'nSmooth',
-    'MinGasHsmlFractional'  : 'dhMinOverSoft',
-    'ArtBulkViscConst'      : 'dConstAlpha',
-    'CourantFac'            : 'dEtaCourant'
+    'ErrTolTheta'           : 'dTheta'
 }
 
 def get_input_file(file_name):
@@ -82,9 +69,6 @@ def convert_parameter_file(gadget_params, args, do_gas):
     
     # disable density outputs by default
     changa_params['bDoDensity'] = 0
-    
-    # gadget courant factor is half of normal
-    changa_params['dEtaCourant'] = 2.0 * float(changa_params['dEtaCourant'])
 
     # convert cm to kpc
     unitlength = float(gadget_params['UnitLength_in_cm']) * u.cm
@@ -97,12 +81,29 @@ def convert_parameter_file(gadget_params, args, do_gas):
     unitmass = float((float(gadget_params['UnitMass_in_g']) * u.g).to(u.Msun) / u.Msun)
     changa_params['dMsolUnit'] = unitmass / float(G_factor / u.Msun)
     
+    if int(gadget_params['ComovingIntegrationOn']) == 1:
+        changa_params['bComove'] = gadget_params['ComovingIntegrationOn']
+        changa_params['dOmega0'] = gadget_params['Omega0']
+        changa_params['dLambda'] = gadget_params['OmegaLambda']
+        changa_params['dOmegab'] = gadget_params['OmegaBaryon']
+        changa_params['dHubble0'] = gadget_params['HubbleParam']
+        changa_params['dPeriod'] = gadget_params['BoxSize']
+        changa_params['bPeriodic'] = gadget_params['PeriodicBoundariesOn']
+    
     if do_gas:
         changa_params['bDoGas'] = 1
         changa_params['bSphStep'] = 1
         changa_params['bConcurrentSph'] = 1
+        changa_params['nSmooth'] = gadget_params['DesNumNgb']
+        changa_params['bGasCooling'] = gadget_params['CoolingOn']
+        changa_params['bStarForm'] = gadget_params['StarformationOn']
+        changa_params['dhMinOverSoft'] = gadget_params['MinGasHsmlFractional']
         
-        if int(changa_params['bGasCooling']) == 1 and int(changa_params['bComove']) == 0:
+        # gadget courant factor is half of normal
+        changa_params['dEtaCourant'] = 2.0 * float(gadget_params['CourantFac'])
+        
+        if int(changa_params['bGasCooling']) == 1 and int(gadget_params['ComovingIntegrationOn']) == 0:
+            print("Disabling UV background for cooling")
             changa_params['bUV'] = 0
        
         if int(changa_params['bStarForm']) == 1:
@@ -116,10 +117,12 @@ def convert_parameter_file(gadget_params, args, do_gas):
                 changa_params['dStarEff'] = 0.99
             else:
                 changa_params['dStarEff'] = 1.0 / float(args.generations)
-            
-        changa_params['bBulkViscosity'] = int(args.viscosity)
-        changa_params['dConstBeta'] = gadget_params['ArtBulkViscConst']
-        print('Beta constant of artificial viscosity assumed to be the same as alpha constant')
+        
+        if int(args.viscosity) == 1:
+            changa_params['bBulkViscosity'] = 1
+            changa_params['dConstAlpha'] = gadget_params['ArtBulkViscConst']
+            changa_params['dConstBeta'] = gadget_params['ArtBulkViscConst']
+            print('Beta constant of artificial viscosity assumed to be the same as alpha constant')
     
     return changa_params
 
