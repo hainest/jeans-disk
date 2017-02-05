@@ -59,7 +59,7 @@ with tipsy.streaming_writer(basename) as file:
     if gadget_file.gas is not None:
         gas = gadget_file.gas
         ngas += gas.size
-        temp = gadget.convert_U_to_temperature(gadget_file, gadget_params)
+        temp = gadget.convert_U_to_temperature(gas, gadget_params)
         gas.mass *= changa_params['dMsolUnit']
         gas.velocities *= velocity_scale
         metals = gas.metals if gas.metals is not None else np.zeros(gas.size)

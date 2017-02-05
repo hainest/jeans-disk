@@ -103,19 +103,26 @@ class gas_particle(particle_with_metals):
         self.internal_energy = np.empty(data['InternalEnergy'].shape, data['InternalEnergy'].dtype)
         data['InternalEnergy'].read_direct(self.internal_energy)
         
-        self.density = np.empty(data['Density'].shape, data['Density'].dtype)
-        data['Density'].read_direct(self.density)
+        if 'Density' in data.keys():
+            self.density = np.empty(data['Density'].shape, data['Density'].dtype)
+            data['Density'].read_direct(self.density)
+        else:
+            self.density = np.empty(self.size, dtype=np.float32)
         
-        self.hsml = np.empty(data['SmoothingLength'].shape, data['SmoothingLength'].dtype)
-        data['SmoothingLength'].read_direct(self.hsml)
+        if 'SmoothingLength' in data.keys():
+            self.hsml = np.empty(data['SmoothingLength'].shape, data['SmoothingLength'].dtype)
+            data['SmoothingLength'].read_direct(self.hsml)
+        else:
+            self.hsml = np.empty(self.size, dtype=np.float32)
 
-        self.electron_density = None
-        if header.flag_cooling:
+        if header.flag_cooling and 'ElectronAbundance' in data.keys():
             self.electron_density = np.empty(data['ElectronAbundance'].shape, data['ElectronAbundance'].dtype)
             data['ElectronAbundance'].read_direct(self.electron_density)
+        else:
+            self.electron_density = np.empty(self.size, dtype=np.float32)
         
         self.sfr = None
-        if header.flag_sfr:
+        if header.flag_sfr and 'StarFormationRate' in data.keys():
             self.sfr = np.empty(data['StarFormationRate'].shape, data['StarFormationRate'].dtype)
             data['StarFormationRate'].read_direct(self.sfr)
         
