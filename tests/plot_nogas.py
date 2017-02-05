@@ -9,8 +9,20 @@ import gadget
 
 limits = (20.0, 20.0) # kpc
 
-changa_snaps = ['ChaNGa/nogas/nogas.tipsy', 'ChaNGa/nogas/nogas.out.000050.tipsy', 'ChaNGa/nogas/nogas.out.000150.tipsy', 'ChaNGa/nogas/nogas.out.000250.tipsy']
-gadget_snaps = ['Gadget3/nogas/nogas.hdf5', 'Gadget3/nogas/nogas_000.hdf5', 'Gadget3/nogas/nogas_002.hdf5', 'Gadget3/nogas/nogas_004.hdf5']
+changa_snaps = [
+    'ChaNGa/nogas/nogas.tipsy',
+    'ChaNGa/nogas/nogas.out.000050.tipsy',
+    'ChaNGa/nogas/nogas.out.000150.tipsy',
+    'ChaNGa/nogas/nogas.out.000250.tipsy',
+    'ChaNGa/nogas/nogas.out.000500.tipsy'
+]
+gadget_snaps = [
+    'Gadget3/nogas/nogas.hdf5',
+    'Gadget3/nogas/nogas_000.hdf5',
+    'Gadget3/nogas/nogas_002.hdf5',
+    'Gadget3/nogas/nogas_004.hdf5',
+    'Gadget3/nogas/nogas_010.hdf5'
+]
 
 for f in changa_snaps:
     helpers.process_changa_snapshot(f, f+'.pickle', limits)
