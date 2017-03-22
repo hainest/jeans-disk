@@ -28,7 +28,7 @@ def convert_U_to_temperature(gas_data, params=None):
     mean_weight = 4.0 / (1.0 + 3.0 * h_massfrac)
     
     # Fully ionized gas
-    if params is not None and float(params['InitGasTemp']) > 1e4:
+    if params is not None and float(params['InitGasTemp']) >= 1e4:
         mean_weight = 4.0 / (8.0 - 5.0 * (1.0 - h_massfrac))
 
     # Gas with metals
@@ -51,7 +51,7 @@ def convert_U_to_temperature(gas_data, params=None):
     return temp
 
 class basic_particle():
-    def __init__(self, data, mass, header):
+    def __init__(self, data, mass):
         self.positions = np.empty(data['Coordinates'].shape, data['Coordinates'].dtype)
         data['Coordinates'].read_direct(self.positions)
         
@@ -68,64 +68,60 @@ class basic_particle():
         
         self.potential = None
         if 'Potential' in data.keys():
-             self.potential = np.empty(data['Potential'].shape, data['Potential'].dtype)
-             data['Potential'].read_direct(self.potential)
+            self.potential = np.empty(data['Potential'].shape, data['Potential'].dtype)
+            data['Potential'].read_direct(self.potential)
         
         # Some useful aliases
         self.pos = self.positions
         self.vel = self.velocities
         self.pot = self.potential
 
-class particle_with_metals(basic_particle):
-    def __init__(self, data, mass, header):
-        super().__init__(data, mass, header)
+class star_particle(basic_particle):
+    def __init__(self, data, mass):
+        super().__init__(data, mass)
 
         self.t_form = None
-        if header.flag_sfr and header.flag_stellarage:
-            if 'StellarFormationTime' in data.keys():
-                self.t_form = np.empty(data['StellarFormationTime'].shape, data['StellarFormationTime'].dtype)
-                data['StellarFormationTime'].read_direct(self.t_form)
-            else:
-                print('Stellar evolution enabled, but StellarFormationTime is not present. Skipping...')
+        if 'StellarFormationTime' in data.keys():
+            self.t_form = np.empty(data['StellarFormationTime'].shape, data['StellarFormationTime'].dtype)
+            data['StellarFormationTime'].read_direct(self.t_form)
         
         self.metals = None
-        if header.flag_sfr and header.flag_metals:
-            if 'Metallicity' in data.keys():
-                self.metals = np.empty(data['Metallicity'].shape, data['Metallicity'].dtype)
-                data['Metallicity'].read_direct(self.metals)
-            else:
-                print('Star formation and metals enabled, but no stellar metals found. Skipping...')
+        if 'Metallicity' in data.keys():
+            self.metals = np.empty(data['Metallicity'].shape, data['Metallicity'].dtype)
+            data['Metallicity'].read_direct(self.metals)
 
-class gas_particle(particle_with_metals):
-    def __init__(self, data, mass, header):
-        super().__init__(data, mass, header)
+class gas_particle(basic_particle):
+    def __init__(self, data, mass):
+        super().__init__(data, mass)
 
         self.internal_energy = np.empty(data['InternalEnergy'].shape, data['InternalEnergy'].dtype)
         data['InternalEnergy'].read_direct(self.internal_energy)
-        
+
+        self.density = None   
         if 'Density' in data.keys():
             self.density = np.empty(data['Density'].shape, data['Density'].dtype)
             data['Density'].read_direct(self.density)
-        else:
-            self.density = np.empty(self.size, dtype=np.float32)
-        
+
+        self.hsml = None        
         if 'SmoothingLength' in data.keys():
             self.hsml = np.empty(data['SmoothingLength'].shape, data['SmoothingLength'].dtype)
             data['SmoothingLength'].read_direct(self.hsml)
-        else:
-            self.hsml = np.empty(self.size, dtype=np.float32)
 
-        if header.flag_cooling and 'ElectronAbundance' in data.keys():
+        self.electron_density = None
+        if 'ElectronAbundance' in data.keys():
             self.electron_density = np.empty(data['ElectronAbundance'].shape, data['ElectronAbundance'].dtype)
             data['ElectronAbundance'].read_direct(self.electron_density)
-        else:
-            self.electron_density = np.empty(self.size, dtype=np.float32)
         
         self.sfr = None
-        if header.flag_sfr and 'StarFormationRate' in data.keys():
+        if 'StarFormationRate' in data.keys():
             self.sfr = np.empty(data['StarFormationRate'].shape, data['StarFormationRate'].dtype)
             data['StarFormationRate'].read_direct(self.sfr)
         
+        self.metals = None
+        if 'Metallicity' in data.keys():
+            self.metals = np.empty(data['Metallicity'].shape, data['Metallicity'].dtype)
+            data['Metallicity'].read_direct(self.metals)
+
         # Set temperature from internal energy
         # NOTE: This must be done _after_ reading metals and electron density
         self.temperature = convert_U_to_temperature(self)
@@ -248,36 +244,36 @@ class File:
     @property
     def gas(self):
         if self.gas_particles is None and 'PartType0' in self.file.keys():
-            self.gas_particles = gas_particle(self.file['PartType0'], self.header.masstable[0], self.header)
+            self.gas_particles = gas_particle(self.file['PartType0'], self.header.masstable[0])
         return self.gas_particles
 
     @property
     def halo(self):
         if self.halo_particles is None and 'PartType1' in self.file.keys():
-            self.halo_particles = basic_particle(self.file['PartType1'], self.header.masstable[1], self.header)
+            self.halo_particles = basic_particle(self.file['PartType1'], self.header.masstable[1])
         return self.halo_particles
     
     @property
     def disk(self):
         if self.disk_particles is None and 'PartType2' in self.file.keys():
-            self.disk_particles = basic_particle(self.file['PartType2'], self.header.masstable[2], self.header)
+            self.disk_particles = basic_particle(self.file['PartType2'], self.header.masstable[2])
         return self.disk_particles
         
     @property
     def bulge(self):
         if self.bulge_particles is None and 'PartType3' in self.file.keys():
-            self.bulge_particles = particle_with_metals(self.file['PartType3'], self.header.masstable[3], self.header)
+            self.bulge_particles = star_particle(self.file['PartType3'], self.header.masstable[3])
         return self.bulge_particles
     
     @property
     def stars(self):
         if self.star_particles is None and 'PartType4' in self.file.keys():
-            self.star_particles = particle_with_metals(self.file['PartType4'], self.header.masstable[4], self.header)
+            self.star_particles = star_particle(self.file['PartType4'], self.header.masstable[4])
         return self.star_particles
 
     @property
     def boundary(self):
         if self.boundary_particles is None and 'PartType5' in self.file.keys():
-            self.boundary_particles = basic_particle(self.file['PartType5'], self.header.masstable[5], self.header)
+            self.boundary_particles = basic_particle(self.file['PartType5'], self.header.masstable[5])
         return self.boundary_particles
 
